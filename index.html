@@ -12,17 +12,25 @@
     <header>
         <div class="menu-bar">
             <h1 class="logo">Niklas Bunzel</h1>
-            <nav>
+            <div class="menu-toggle" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <nav id="main-nav">
                 <ul>
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#research">Research</a></li>
-                    <li><a href="#talks">Talks</a></li>
-                    <li><a href="#services">Services</a></li>
-                    <li><a href="#cv">CV</a></li>
-                    <li><a href="#publications">Publications</a></li>
+                    <li><a href="#home" onclick="closeMenu()">Home</a></li>
+                    <li><a href="#research" onclick="closeMenu()">Research</a></li>
+                    <li><a href="#talks" onclick="closeMenu()">Talks</a></li>
+     				<li><a href="#training" onclick="closeMenu()">Training</a></li>
+					<li><a href="#software" onclick="closeMenu()">Software</a></li>
+                    <li><a href="#services" onclick="closeMenu()">Services</a></li>
+                    <li><a href="#cv" onclick="closeMenu()">CV</a></li>
+                   <!-- <li><a href="#demos" onclick="closeMenu()">Demos</a></li> -->
+                    <li><a href="#publications" onclick="closeMenu()">Publications</a></li>
                 </ul>
             </nav>
-        </div>   
+        </div>
     </header>
     <main>
     
@@ -48,7 +56,7 @@
 				    <a href="https://www.linkedin.com/in/niklas-bunzel-910a58199/" target="_blank" title="LinkedIn">
 					<i class="fab fa-linkedin"></i>
 				    </a>
-				    <a href="mailto:firstname.lastname@sit.fraunhofer.de" title="Email">
+				    <a href="mailto:firstname.lastname@owasp.org" title="Email">
 					<i class="fas fa-envelope"></i>
 				    </a>
 				    <a href="https://github.com/bunni90" target="_blank" title="GitHub">
@@ -71,23 +79,56 @@
             
             We investigate adversarial attack detectors, with a particular emphasis on adversarial patch detection in both digital and physical domains, focusing on tasks such as face recognition, object detection, and deepfake detection. Our research also explores the transferability of evasion attacks, as well as the use of evasion attacks and adversarial training in continual learning environments. In addition, we advance AI safety by identifying and generating rare edge-case data and simulating adverse weather conditions to improve system robustness and reliability.</p>
 
-
+			<br>
             <h3>Deepfakes</h3>
             <p><a href="https://www.sit.fraunhofer.de/de/secmedid/" target="_blank">SecMedID</a>  focuses on addressing the escalating risks posed by deepfake technologies, which enable the highly realistic manipulation of faces and voices in digital media. These technologies threaten individuals, organizations, and society by facilitating fraud, extortion, and disinformation, eroding trust in media, compromising democratic processes, enabling defamation, tampering with legal evidence, and jeopardizing public safety through falsified communications. 
 
 To counter these threats, the project investigates the state-of-the-art in deepfake methods for video and audio manipulation and advances techniques such as Face Swapping, Facial Reenactment, Voice Conversion, and Text-to-Speech to assess future risks. Additionally, it explores forensic detection mechanisms to identify deepfakes, even when adversarial attacks are employed to obscure their authenticity. By advancing knowledge and tools in both deepfake generation and detection, SecMedID seeks to ensure the integrity and trustworthiness of digital media.</p>
+
+			<br>
             <h3>Media Security & Steganography</h3>
             <p>We conduct research in the fields of media security, steganography, and steganalysis. Media security involves ensuring the integrity and authenticity of digital media, and our work includes developing robust image hashing techniques, particularly for law enforcement applications. Steganography involves concealing information within another medium, such as an image or video, while steganalysis focuses on detecting such hidden data. We have explored its forensic applications. For instance, we investigated scenarios where law enforcement agencies possess auxiliary knowledge, as well as the potential use of platforms like Telegram as a steganographic channel.</p>
+        </section>
+        
+        <section id="software" class="section">
+            <h2>Software Engineering</h2>
+            <h3>Web Development & E-commerce</h3>
+            <p>Developed backend systems for the STREAMED UP platform using PHP and MySQL, implementing data analysis features and integrating the Concardis payment service provider. This work involved building secure, scalable solutions for handling transactions and user data.</p>
+
+            <h3>Desktop Applications</h3>
+            <p>Created custom software solutions with C# including an accounting tool with SQLite database for a music label, and data cleansing and migration tools for Deumavan healthcare applications. These projects required careful attention to data integrity and user-friendly interfaces.</p>
+
+            <h3>Security Testing</h3>
+            <p>Conducted comprehensive usability testing and penetration testing for web applications, identifying vulnerabilities and recommending security improvements. This experience directly informs my research approach to adversarial machine learning and AI security.</p>
+
+            <h3>Academic Tools Development</h3>
+            <p>Developed an Eclipse extension for formal verification in Java as part of the KeY project at TU Darmstadt. This work involved implementing verification logic for ensuring correctness of software systems, and writing automated unit tests and builds with Jenkins.</p>
         </section>
         
         <section id="talks" class="section">
             <h2>Talks</h2>
             <p>Details of my past and upcoming talks.</p>
             <ul class="centered-list">
-            	<li> <b>GenAI in the Battle of Security: Attacks, Defenses, and the Laws Shaping AI's Future</b>, with <a href="https://www.linkedin.com/in/raphael-antonius-frick-937113314/" target="_blank">Raphael Antonius Frick</a>, German OWASP Day, 2024. Slides <a href="https://media.ccc.de/v/god2024-56275-genai-in-the-battle-of-sec#t=1388" target="_blank">Video</a></li>
-		<li> <b>Creating a culture of security</b>, Keynote with <a href="https://www.linkedin.com/in/hectorib/" target="_blank">Hector Ibarra</a>, Amazon AWS re:Inforce re:Cap, 2024</li>
-		<li> <b>Seeing is Not Always Believing: The Rise, Detection, and Evasion of Deepfakes</b>, with <a href="https://www.linkedin.com/in/raphael-antonius-frick-937113314/" target="_blank">Raphael Antonius Frick</a>, OWASP Frankfurt, 2023. <a href="https://owasp.org/www-chapter-frankfurt/assets/slides/63_OWASP_Frankfurt_Stammtisch_2.pdf" target="_blank">Slides</a></li>
-		<li> <b>KI und Sicherheit​ - Maschinelles Lernen als Sicherheitsrisiko?</b>, with <a href="https://www.linkedin.com/in/verena-battis-b13709149/" target="_blank">Verena Battis</a>, Fachtagung Cyber Security, Banken Verlag, 2022</li>
+            	<li> <b>AI Security & Privacy: From Prompt Injection to Multimodal Evasion</b>, OWASP Hamburg, 2025. <a href="https://owasp.org/www-chapter-germany/stammtische/hamburg/assets/slides/2025_07_16%20Bunzel%20-%20AI%20Security%20and%20Privacy.pdf" target="_blank">Slides</a></li>
+    <li> <b>AI Cyber Threats</b>, AI Roundtable, Flemish Government, 2025</li>
+    <li> <b>AI Cyber-Guardrails</b>, AI Roundtable, Flemish Government, 2025</li>
+    <li> <b>Navigating Threats and Defenses: Predictive, Generative and Agentic AI</b>, Cyber Resilience Conference, 2025</li>
+    <li> <b>Threats, Laws, and Defenses – ein praktischer Leitfaden zur KI-Sicherheit</b>, Heise devSec KI und Security, 2025</li>
+    <li> <b>A practical guide to AI-Security</b>, Fraunhofer ATIS, 2025</li>
+            	<li> <b>GenAI in the Battle of Security: Attacks, Defenses, and the Laws Shaping AI's Future</b>, with <a href="https://www.linkedin.com/in/raphael-antonius-frick-937113314/" target="_blank">Raphael Antonius Frick</a>, German OWASP Day, 2024. <a href="https://media.ccc.de/v/god2024-56275-genai-in-the-battle-of-sec#t=1388" target="_blank">Video</a></li>
+				<li> <b>Creating a culture of security</b>, Keynote with <a href="https://www.linkedin.com/in/hectorib/" target="_blank">Hector Ibarra</a>, Amazon AWS re:Inforce re:Cap, 2024</li>
+				<li> <b>Seeing is Not Always Believing: The Rise, Detection, and Evasion of Deepfakes</b>, with <a href="https://www.linkedin.com/in/raphael-antonius-frick-937113314/" target="_blank">Raphael Antonius Frick</a>, OWASP Frankfurt, 2023. <a href="https://owasp.org/www-chapter-frankfurt/assets/slides/63_OWASP_Frankfurt_Stammtisch_2.pdf" target="_blank">Slides</a></li>
+				<li> <b>KI und Sicherheit​ - Maschinelles Lernen als Sicherheitsrisiko?</b>, with <a href="https://www.linkedin.com/in/verena-battis-b13709149/" target="_blank">Verena Battis</a>, Fachtagung Cyber Security, Banken Verlag, 2022</li>
+            </ul>
+        </section>
+
+		<section id="training" class="section">
+            <h2>Training and Consulting</h2>
+            <h3> Fraunhofer Academy (Big Data Alliance)</h3>
+            <ul class="centered-list">
+            	<li>AI/ML Fundamentals</li>
+            	<li>Adversarial Machine Learning - Attacks and Defenses</li>
+            	<li>Trustworthy AI - Security, Privacy, Regulations</li>
             </ul>
         </section>
         
@@ -95,15 +136,22 @@ To counter these threats, the project investigates the state-of-the-art in deepf
             <h2>Services</h2>
             <h3>Technical Program Committee Member</h3>
             <ul class="centered-list">
+				<li>2025: 3rd International Workshop on Reliable and Secure AI for Software Engineering</li>
             	<li>2024: 21st Annual International Conference on Privacy, Security, and Trust</li>
-		<li>2024: 25th International Conference on Web Information Systems Engineering</li>
-		<li>2022: 6th International Workshop on Criminal Use of Information Hiding (CUING 2022)</li>
+				<li>2024: 25th International Conference on Web Information Systems Engineering</li>
+				<li>2022: 6th International Workshop on Criminal Use of Information Hiding (CUING 2022)</li>
             </ul>
             <h3>Journal Reviewer</h3>
             <ul class="centered-list">
             	<li>IEEE Transactions on artificial intelligence (TAI)</li>
-		<li>Computers & Security</li>
+				<li>IEEE Transactions on Information Forensics and Security (TIFS)</li>
+				<li>Computers & Security</li>
             </ul>
+			<h3>Session Chair</h3>
+			<ul class="centered-list">
+				<li>2025: Dependable and Secure Machine Learning</li>
+				<li>2024: 23th International Conference on Trust, Security and Privacy in Computing and Communications</li>
+			</ul>
         </section>
         
         <section id="cv" class="section">
@@ -115,7 +163,7 @@ To counter these threats, the project investigates the state-of-the-art in deepf
 		        <li><strong>Core Member, OWASP AI Exchange</strong> (Since 11.2023)</li>
 		        <li><strong>Research Scientist, Fraunhofer SIT</strong> (Since 04.2020)</li>
 		        <li><strong>Software Engineer, Independent</strong> (12.2019–04.2020)</li>
-		        <li><strong>Software Engineering \& Project Design, SÖRF GbR</strong> (03.2018--12.2019)</li>
+		        <li><strong>Software Engineering & Project Design, SÖRF GbR (now part of STREAMED UP)</strong> (03.2018--12.2019)</li>
 		        <li><strong>Software Engineer, Independent</strong> (06.2016--02.2018)</li>
 		        <li><strong>Student Assistant, TU Darmstadt</strong> (04.2013--09.2013)</li>
 		    </ul>
@@ -133,7 +181,7 @@ To counter these threats, the project investigates the state-of-the-art in deepf
 		<div class="cv-section">
 		    <h3>Skills</h3>
 		    <ul class="centered-list">
-		        <li><strong>Industry Knowledge:</strong> Machine Learning, Adversarial ML, Digital Signatures, IT-Forensics, Cryptography, PKI</li>
+		        <li><strong>Industry Knowledge:</strong> <p>Machine Learning, Adversarial ML, Digital Signatures, IT-Forensics, Cryptography, PKI</p></li>
 		        <li><strong>Programming Languages:</strong> Python, C#/.Net, PHP</li>
 		        <li><strong>Frameworks:</strong> PyTorch, TensorFlow, Adversarial Robustness Toolbox</li>
 		        <li><strong>Languages:</strong> German (native), English (fluent)</li>
@@ -150,29 +198,85 @@ To counter these threats, the project investigates the state-of-the-art in deepf
 	    </div>
 	</section>
 	
+	<!--
+	<section id="demos" class="section">
+	    <h2>Demos</h2>
+	    <div class="demos-container">
+	    <p>The research and accompanying demonstrations presented here were conducted during my time at Fraunhofer SIT and ATHENE, with the valuable support of Gerrit Klause and Ashim Siwakoti.</br>
+	    The images used in this work are not my own; I do not hold or claim any rights to them. They are sourced from publicly available datasets and are used here strictly for research and illustrative purposes in accordance with their respective licenses.
+	    </p>
+		<div class="demo-section">
+		    <h3>Adversarial Patch Detection</h3>
+		    <p>...</p>
+		    <label for="keySelect">Select Image:</label>
+		    <select id="keySelect" onchange="changeKey()">
+		        <option value="0">0</option>
+		        <option value="1">1</option>
+		        <option value="2">2</option>
+		        <option value="3">3</option>
+		        <option value="4">4</option>
+		    </select>
+			  
+		    <div class="carousel">
+		    	<div class="slides" id="slides">
+		    		<!-- Slides will be populated by JavaScript -->
+		    	<!-- </div>
+		    </div>
+
+		    <div class="carousel-buttons">
+		    	<button onclick="prevSlide()">Previous</button>
+		    	<button onclick="nextSlide()">Next</button>
+		    </div>
+	 
+	
+		
+		    
+		</div>
+		<div class="demo-section">
+		    <h3>Pasting Attack</h3>
+		    
+		</div>
+		<div class="demo-section">
+		    <h3>Robust Face Recognition</h3>
+		    
+		</div>
+	    </div>
+	</section>
+	-->
+	
 	<section id="publications" class="section">
 	    <h2>Publications</h2>
 	    <ul class="centered-list">
-		<li><em>Analyzing the Effectiveness of Image Preprocessing Defenses Under Runtime Constraints.</em> TrustCom 2024</li>
-		<li><em>Bridging the Gap: The Role of OWASP AI Exchange in AI Standardization.</em> <a href="https://dl.gi.de/items/9f8612f8-43a2-40ff-9be1-21d5b6b22235" target="_blank">INFORMATIK 2024</a></li>
-		<li><em>Adversarial Patch Detection: Leveraging Depth Contrast for Enhanced Threat Visibility.</em> <a href="https://ieeexplore.ieee.org/document/10646903" target="_blank">DSML@DSN 2024</a></li>
-		<li><em>Measuring the effects of environmental influences on Object Detection.</em> <a href="https://ieeexplore.ieee.org/document/10646929" target="_blank">DSML@DSN 2024</a></li>
-		<li><em>Patching the Cracks: Detecting and Addressing Adversarial Examples in Real-World Applications.</em> <a href="https://ieeexplore.ieee.org/document/10647102" target="_blank">DSN 2024</a></li>
-		<li><em>Signals Are All You Need: Detecting Digital and Real-World Adversarial Patches Using Signal-Based Features.</em> <a href="https://dl.acm.org/doi/abs/10.1145/3665451.3665530" target="_blank">SecTL@AsiaCCS 2024</a></li>
-		<li><em>Identifying and Generating Edge Cases.</em> <a href="https://dl.acm.org/doi/10.1145/3665451.3665529" target="_blank">SecTL@AsiaCCS 2024</a></li>
-		<li><em>Prediction of Flipped Bits in Robust Image Hashes by Machine Learning.</em> <a href="" target="_blank">EI 2024</a></li>
-		<li><em>Transferrability of Adversarial Attacks from Convolutional Neural Networks to ChatGPT4.</em> <a href="https://publica.fraunhofer.de/entities/publication/d506b2ba-78fe-431d-83f8-72a82986fa1d" target="_blank">Publica 2023</a></li>
-		<li><em>A Concise Analysis of Pasting Attacks and their Impact on Image Classification.</em> <a href="https://ieeexplore.ieee.org/document/10207094" target="_blank">DSML@DSN 2023</a></li>
-		<li><em>Adversarial Patch Detection and Mitigation by Detecting High Entropy Regions.</em> <a href="https://ieeexplore.ieee.org/document/10207151" target="_blank">DSML@DSN 2023</a></li>
-		<li><em>Multi-class Detection for Off The Shelf transfer-based Black Box Attacks.</em> <a href="https://dl.acm.org/doi/10.1145/3591197.3591305" target="_blank">SecTL@AsiaCCS 2023</a></li>
-		<li><em>Detection of deepfakes using background-matching.</em> <a href="https://library.imaging.org/ei/articles/35/4/MWSF-381" target="_blank">EI 2023</a></li>
-		<li><em>Predicting positions of flipped bits in robust image hashes.</em> <a href="https://library.imaging.org/ei/articles/36/4/MWSF-339" target="_blank">EI 2023</a></li>
-		<li><em>Face Pasting Attack.</em> <a href="https://arxiv.org/abs/2210.09153" target="_blank">ARXIV 2022</a></li>
-		<li><em>Using Telegram as a carrier for image steganography: Analysing Telegrams API limits.</em> <a href="https://dl.acm.org/doi/10.1145/3538969.3544440" target="_blank">CUING@ARES 2022</a></li>
-		<li><em>Robust face recognition: How much face Is needed?.</em> <a href="https://library.imaging.org/ei/articles/34/4/MWSF-209" target="_blank">EI 2022</a></li>
-		<li><em>Adversarial Examples zum Selbstdatenschutz? Der Fall biometrischer Gesichtserkennung im öffentlichen Raum.</em> <a href="https://dl.gi.de/items/1ae3a1bf-615f-49c8-b6d5-9079193f9e84" target="_blank">INFORMATIK 2021</a></li>
-		<li><em>Cover-aware Steganalysis.</em> <a href="https://journals.riverpublishers.com/index.php/JCSANDM/article/view/5967" target="_blank">J. Cyber Secur. Mobil. 2021</a></li>
-		<li><em>Non-Blind Steganalysis.</em> <a href="https://dl.acm.org/doi/10.1145/3407023.3409221" target="_blank">CUING@ARES 2020</a></li>
+			<li><em>Statistical Feature-Based Detection of Adversarial Noise and Patch Attacks in Image and Deepfake Analysis</em> <a href="https://link.springer.com/chapter/10.1007/978-3-031-99447-0_14" target="_blank">Adversarial Example Detection and Mitigation Using Machine Learning 2026</a></li>
+			<li><em>Exploring the Relationship Between Network Similarity and Transferability of Adversarial Attacks</em> <a href="https://ieeexplore.ieee.org/abstract/document/11354890" target="_blank">TrustCom 2025</a></li>
+			<li><em>Evasion Attacks in Continual Learning</em> <a href="https://ieeexplore.ieee.org/document/11354676" target="_blank">TrustCom 2025</a></li>
+			<li><em>Team RoMa @ AADD-2025: On the Generation of Transferable and Visually Imperceptible Adversarial Attacks Against Deepfake Detectors</em> <a href="https://dl.acm.org/doi/abs/10.1145/3746027.3761984" target="_blank">AADD@MM 2025</a></li>
+			<li><em>Adversarial Attack Challenge for Secure Face Recognition 2025</em> AAC@IJCB 2025</li>
+			<li><em>Seeing is No Longer Believing - How Deepfakes May Shape the Future of Identity Credibility in Media</em> <a href="https://dl.acm.org/doi/full/10.1145/3733813.3764371" target="_blank">3DSec@CCS 2025</a></li>
+			<li><em>Adversarial Patch Robustness against Occlusion: A case study</em> <a href="https://dl.acm.org/doi/full/10.1145/3709021.3737664" target="_blank">SecTL@AsiaCCS 2025</a></li>
+			<li><em>Quantifying the Risk of Transferred Black Box Attacks</em> <a href="https://arxiv.org/abs/2511.05102" target="_blank">arXiv</a></li>
+			<li><em>On the Transferability of Adversarial Attacks from Convolutional Neural Networks to Variants of ChatGPT4</em> <a href="https://ieeexplore.ieee.org/abstract/document/11071551" target="_blank">DSML@DSN 2025</a></li>
+			<li><em>Compliance Made Practical: Translating the EU AI Act into Implementable Actions</em> <a href="https://ieeexplore.ieee.org/abstract/document/11029418" target="_blank">RAIE@ICSE 2025</a></li>
+			<li><em>Analyzing the Effectiveness of Image Preprocessing Defenses Under Runtime Constraints.</em> <a href="https://ieeexplore.ieee.org/abstract/document/10944831" target="_blank">TrustCom 2024</a></li>
+			<li><em>Bridging the Gap: The Role of OWASP AI Exchange in AI Standardization.</em> <a href="https://dl.gi.de/items/9f8612f8-43a2-40ff-9be1-21d5b6b22235" target="_blank">INFORMATIK 2024</a></li>
+			<li><em>Adversarial Patch Detection: Leveraging Depth Contrast for Enhanced Threat Visibility.</em> <a href="https://ieeexplore.ieee.org/document/10646903" target="_blank">DSML@DSN 2024</a></li>
+			<li><em>Measuring the effects of environmental influences on Object Detection.</em> <a href="https://ieeexplore.ieee.org/document/10646929" target="_blank">DSML@DSN 2024</a></li>
+			<li><em>Patching the Cracks: Detecting and Addressing Adversarial Examples in Real-World Applications.</em> <a href="https://ieeexplore.ieee.org/document/10647102" target="_blank">DSN 2024</a></li>
+			<li><em>Signals Are All You Need: Detecting Digital and Real-World Adversarial Patches Using Signal-Based Features.</em> <a href="https://dl.acm.org/doi/abs/10.1145/3665451.3665530" target="_blank">SecTL@AsiaCCS 2024</a></li>
+			<li><em>Identifying and Generating Edge Cases.</em> <a href="https://dl.acm.org/doi/10.1145/3665451.3665529" target="_blank">SecTL@AsiaCCS 2024</a></li>
+			<li><em>Prediction of Flipped Bits in Robust Image Hashes by Machine Learning.</em> <a href="" target="_blank">EI 2024</a></li>
+			<li><em>Transferrability of Adversarial Attacks from Convolutional Neural Networks to ChatGPT4.</em> <a href="https://publica.fraunhofer.de/entities/publication/d506b2ba-78fe-431d-83f8-72a82986fa1d" target="_blank">Publica 2023</a></li>
+			<li><em>A Concise Analysis of Pasting Attacks and their Impact on Image Classification.</em> <a href="https://ieeexplore.ieee.org/document/10207094" target="_blank">DSML@DSN 2023</a></li>
+			<li><em>Adversarial Patch Detection and Mitigation by Detecting High Entropy Regions.</em> <a href="https://ieeexplore.ieee.org/document/10207151" target="_blank">DSML@DSN 2023</a></li>
+			<li><em>Multi-class Detection for Off The Shelf transfer-based Black Box Attacks.</em> <a href="https://dl.acm.org/doi/10.1145/3591197.3591305" target="_blank">SecTL@AsiaCCS 2023</a></li>
+			<li><em>Detection of deepfakes using background-matching.</em> <a href="https://library.imaging.org/ei/articles/35/4/MWSF-381" target="_blank">EI 2023</a></li>
+			<li><em>Predicting positions of flipped bits in robust image hashes.</em> <a href="https://library.imaging.org/ei/articles/36/4/MWSF-339" target="_blank">EI 2023</a></li>
+			<li><em>Face Pasting Attack.</em> <a href="https://arxiv.org/abs/2210.09153" target="_blank">ARXIV 2022</a></li>
+			<li><em>Using Telegram as a carrier for image steganography: Analysing Telegrams API limits.</em> <a href="https://dl.acm.org/doi/10.1145/3538969.3544440" target="_blank">CUING@ARES 2022</a></li>
+			<li><em>Robust face recognition: How much face Is needed?.</em> <a href="https://library.imaging.org/ei/articles/34/4/MWSF-209" target="_blank">EI 2022</a></li>
+			<li><em>Adversarial Examples zum Selbstdatenschutz? Der Fall biometrischer Gesichtserkennung im öffentlichen Raum.</em> <a href="https://dl.gi.de/items/1ae3a1bf-615f-49c8-b6d5-9079193f9e84" target="_blank">INFORMATIK 2021</a></li>
+			<li><em>Cover-aware Steganalysis.</em> <a href="https://journals.riverpublishers.com/index.php/JCSANDM/article/view/5967" target="_blank">J. Cyber Secur. Mobil. 2021</a></li>
+			<li><em>Non-Blind Steganalysis.</em> <a href="https://dl.acm.org/doi/10.1145/3407023.3409221" target="_blank">CUING@ARES 2020</a></li>
 	    </ul>
 	</section>
 
@@ -199,6 +303,42 @@ To counter these threats, the project investigates the state-of-the-art in deepf
         lastScrollPosition = currentScrollPosition <= 0 ? 0 : currentScrollPosition; // Avoid negative scroll
     });
 </script>
+
+<script src="carousel.js"></script>
+
+<script>
+    // Mobile menu toggle
+    function toggleMenu() {
+        const nav = document.getElementById('main-nav');
+        const menuToggle = document.querySelector('.menu-toggle');
+        nav.classList.toggle('active');
+        menuToggle.classList.toggle('active');
+    }
+    
+    function closeMenu() {
+        const nav = document.getElementById('main-nav');
+        const menuToggle = document.querySelector('.menu-toggle');
+        nav.classList.remove('active');
+        menuToggle.classList.remove('active');
+    }
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const nav = document.getElementById('main-nav');
+        const menuToggle = document.querySelector('.menu-toggle');
+        if (!nav.contains(event.target) && !menuToggle.contains(event.target)) {
+            closeMenu();
+        }
+    });
+    
+    // Handle window resize - close menu on resize to desktop
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 900) {
+            closeMenu();
+        }
+    });
+</script>
+
 </body>
 </html>
 
