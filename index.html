@@ -21,15 +21,18 @@
                 <ul>
                     <li><a href="#home" onclick="closeMenu()">Home</a></li>
                     <li><a href="#research" onclick="closeMenu()">Research</a></li>
+                    <li><a href="#software" onclick="closeMenu()">Software</a></li>
                     <li><a href="#talks" onclick="closeMenu()">Talks</a></li>
      				<li><a href="#training" onclick="closeMenu()">Training</a></li>
-					<li><a href="#software" onclick="closeMenu()">Software</a></li>
                     <li><a href="#services" onclick="closeMenu()">Services</a></li>
                     <li><a href="#cv" onclick="closeMenu()">CV</a></li>
                    <!-- <li><a href="#demos" onclick="closeMenu()">Demos</a></li> -->
                     <li><a href="#publications" onclick="closeMenu()">Publications</a></li>
                 </ul>
             </nav>
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+            </button>
         </div>
     </header>
     <main>
@@ -39,7 +42,7 @@
 			<!-- Left: Text Content -->
 			<div class="left-content">
 			    <h2>Niklas Bunzel</h2>
-			    <p>I am a research scientist at the Fraunhofer SIT and currently pursuing my PhD at the TU-Darmstadt. I specialize in artificial intelligence and IT security, focusing on adversarial machine learning and robustness in AI systems. My expertise includes developing defenses against adversarial attacks, such as evasion attacks, and advancing deepfake detection methods, supported by a portfolio of over 20 publications. As a core member of the OWASP AI Exchange I bridge technical safeguards with regulatory requirements. I regularly present at academic and industry conferences, sharing insights on adversarial ML and AI security. I am skilled in frameworks and programming languages such as PyTorch, Keras, and Python, and I create proofs of concept that bring my research to life. My work is driven by the goal of advancing secure, trustworthy, and impactful AI systems.</p>
+			    <p>I am a research scientist at the Fraunhofer SIT and currently pursuing my PhD at the TU-Darmstadt. I specialize in artificial intelligence and IT security, focusing on adversarial machine learning and robustness in AI systems. My expertise includes developing defenses against adversarial attacks, such as evasion attacks, and advancing deepfake detection methods, supported by a portfolio of over 20 publications. As a core member of the <a href="https://owaspai.org/" target="_blank">OWASP AI Exchange</a> I bridge technical safeguards with regulatory requirements. I regularly present at academic and industry conferences, sharing insights on adversarial ML and AI security. I am skilled in frameworks and programming languages such as PyTorch, Keras, and Python, and I create proofs of concept that bring my research to life. My work is driven by the goal of advancing secure, trustworthy, and impactful AI systems.</p>
 			</div>
 			
 			<!-- Right: Image, Occupation, and Contact -->
@@ -93,16 +96,16 @@ To counter these threats, the project investigates the state-of-the-art in deepf
         <section id="software" class="section">
             <h2>Software Engineering</h2>
             <h3>Web Development & E-commerce</h3>
-            <p>Developed backend systems for the STREAMED UP platform using PHP and MySQL, implementing data analysis features and integrating the Concardis payment service provider. This work involved building secure, scalable solutions for handling transactions and user data.</p>
+            <p>Developed backend systems for the <a href="https://streamed-up.com/" target="_blank">STREAMED UP</a> platform using PHP and MySQL, implementing data analysis features and integrating the Concardis payment service provider. This work involved building secure, scalable solutions for handling transactions and user data.</p>
 
             <h3>Desktop Applications</h3>
-            <p>Created custom software solutions with C# including an accounting tool with SQLite database for a music label, and data cleansing and migration tools for Deumavan healthcare applications. These projects required careful attention to data integrity and user-friendly interfaces.</p>
+            <p>Created custom software solutions with C# including an accounting tool with SQLite database for the music label <a href="https://www.besser-samstag.de/" target="_blank">Besser-Samstag</a>, and data cleansing and migration tools for <a href="https://deumavan.com/" target="_blank">Deumavan</a> healthcare applications. These projects required careful attention to data integrity and user-friendly interfaces.</p>
 
             <h3>Security Testing</h3>
             <p>Conducted comprehensive usability testing and penetration testing for web applications, identifying vulnerabilities and recommending security improvements. This experience directly informs my research approach to adversarial machine learning and AI security.</p>
 
             <h3>Academic Tools Development</h3>
-            <p>Developed an Eclipse extension for formal verification in Java as part of the KeY project at TU Darmstadt. This work involved implementing verification logic for ensuring correctness of software systems, and writing automated unit tests and builds with Jenkins.</p>
+            <p>Developed an Eclipse extension for formal verification in Java as part of the <a href="https://www.key-project.org/" target="_blank">KeY project</a> at TU Darmstadt. This work involved implementing verification logic for ensuring correctness of software systems, and writing automated unit tests and builds with Jenkins.</p>
         </section>
         
         <section id="talks" class="section">
@@ -288,6 +291,34 @@ To counter these threats, the project investigates the state-of-the-art in deepf
     <script>
     let lastScrollPosition = 0;
     const menuBar = document.querySelector('.menu-bar');
+
+    function toggleDarkMode() {
+        const html = document.documentElement;
+        const icon = document.querySelector('.dark-mode-toggle i');
+        if (html.getAttribute('data-theme') === 'dark') {
+            html.removeAttribute('data-theme');
+            icon.className = 'fas fa-moon';
+            localStorage.setItem('theme', 'light');
+        } else {
+            html.setAttribute('data-theme', 'dark');
+            icon.className = 'fas fa-sun';
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+
+    (function() {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else if (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+        if (document.documentElement.getAttribute('data-theme') === 'dark') {
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelector('.dark-mode-toggle i').className = 'fas fa-sun';
+            });
+        }
+    })();
 
     window.addEventListener('scroll', () => {
         const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
