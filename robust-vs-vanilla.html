@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robust vs Vanilla Image Classifiers &mdash; Niklas Bunzel</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <header>
+        <div class="menu-bar">
+            <h1 class="logo"><a href="index.html" style="color:inherit;text-decoration:none;">Niklas Bunzel</a></h1>
+            <div class="menu-toggle" onclick="toggleMenu()">
+                <span></span><span></span><span></span>
+            </div>
+            <nav id="main-nav">
+                <ul>
+                    <li><a href="#home" onclick="closeMenu()">Home</a></li>
+                    <li><a href="#research" onclick="closeMenu()">Research</a></li>
+                    <li><a href="#software" onclick="closeMenu()">Software</a></li>
+                    <li><a href="#talks" onclick="closeMenu()">Talks</a></li>
+     				<li><a href="#training" onclick="closeMenu()">Training</a></li>
+                    <li><a href="#services" onclick="closeMenu()">Services</a></li>
+                    <li><a href="#cv" onclick="closeMenu()">CV</a></li>
+                   <!-- <li><a href="#demos" onclick="closeMenu()">Demos</a></li> -->
+                    <li><a href="#publications" onclick="closeMenu()">Publications</a></li>
+                    <li><a href="robust-vs-vanilla.html" onclick="closeMenu()">VanillaBench</a></li>
+                </ul>
+            </nav>
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div class="bm-wrap">
+            <section id="benchmark" class="section">
+                <h2>Robust vs. Vanilla Image Classifiers</h2>
+                <p class="bm-intro">
+                    Standard accuracy of adversarially-trained models (from
+                    <a href="https://robustbench.github.io/" target="_blank">RobustBench</a>)
+                    compared against vanilla / standard models (from
+                    <a href="https://paperswithcode.co/task/image-classification" target="_blank">Papers with Code</a>).
+                    Adversarial-training papers rarely report the vanilla SOTA they compare against, and the
+                    underlying vanilla model is usually unknown &mdash; so several comparison references are shown
+                    (best / median / mean / top-10 statistics of all PwC entries, the same restricted to
+                    <em>vanilla (no extra data)</em> models, and a hand-curated
+                    <em>architecture-matched</em> baseline whose standard accuracies are taken from the
+                    <a href="https://docs.pytorch.org/vision/stable/models.html#table-of-all-available-classification-weights" target="_blank">torchvision model zoo</a>
+                    for ImageNet and from the original architecture papers for CIFAR). Robust accuracy is the standardized AutoAttack value.
+                </p>
+
+                <div id="bm-loading" class="bm-loading">Loading data...</div>
+                <div id="bm-error" class="bm-error" style="display:none;"></div>
+
+                <div id="bm-content" style="display:none;">
+
+                    <!-- track tabs -->
+                    <div class="bm-tabs" id="bm-track-tabs"></div>
+
+                    <!-- controls -->
+                    <div class="bm-controls">
+                        <div class="bm-field">
+                            <label for="bm-scope">Models shown</label>
+                            <select id="bm-scope">
+                                <option value="3">Top 3</option>
+                                <option value="10" selected>Top 10</option>
+                                <option value="99999">All</option>
+                            </select>
+                        </div>
+                        <div class="bm-field">
+                            <label for="bm-ref">Comparison reference</label>
+                            <select id="bm-ref"></select>
+                        </div>
+                        <div class="bm-field bm-field-check">
+                            <label for="bm-direct-only">Direct match only</label>
+                            <label class="bm-check">
+                                <input type="checkbox" id="bm-direct-only">
+                                <span>Hide proxy-matched architectures</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- scatter -->
+                    <div class="bm-chart-card">
+                        <h3>Clean accuracy vs. robust accuracy (AutoAttack)</h3>
+                        <div class="bm-sub">One point per robust model; colour = publication year. Vertical dashed line = selected vanilla reference.</div>
+                        <div class="bm-canvas-box">
+                            <canvas id="bm-scatter"></canvas>
+                        </div>
+                        <div class="bm-refline-legend" id="bm-scatter-legend"></div>
+                    </div>
+
+                    <!-- bar -->
+                    <div class="bm-chart-card">
+                        <h3>Clean vs. robust vs. vanilla reference (top-N)</h3>
+                        <div class="bm-sub">Grouped bars per robust model; horizontal line = selected vanilla reference.</div>
+                        <div class="bm-canvas-box bm-bar-box">
+                            <canvas id="bm-bar"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- table -->
+                    <div class="bm-chart-card">
+                        <h3>Model table</h3>
+                        <div class="bm-sub">Click a column header to sort. &Delta; = model value &minus; reference (negative = model is below the reference).</div>
+                        <div class="bm-table-wrap">
+                            <table class="bm-table" id="bm-table">
+                                <thead><tr id="bm-thead"></tr></thead>
+                                <tbody id="bm-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bm-footnote">
+                        <strong>Sources:</strong>
+                        Robust accuracy &amp; clean accuracy of robust models:
+                        <a href="https://robustbench.github.io/" target="_blank">RobustBench model_info</a>
+                        (ranked by AutoAttack). Vanilla / standard accuracy:
+                        <a href="https://paperswithcode.co/task/image-classification" target="_blank">Papers with Code API</a>
+                        (image-classification leaderboards for CIFAR-10, CIFAR-100, ImageNet-1k).
+                        (ImageNet values from the
+                        <a href="https://docs.pytorch.org/vision/stable/models.html#table-of-all-available-classification-weights" target="_blank">torchvision model zoo</a>,
+                        CIFAR values from the original architecture papers) Note
+                        that Papers with Code's leaderboards are now curated/trimmed by Hugging Face, so reference
+                        statistics reflect the live curated boards rather than an exhaustive historical list.
+                        <span class="bm-gen" id="bm-gen"></span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Niklas Bunzel. All Rights Reserved.</p>
+    </footer>
+
+<script>
+/* ============================ theme + menu ============================ */
+function toggleDarkMode() {
+    const html = document.documentElement;
+    const icon = document.querySelector('.dark-mode-toggle i');
+    if (html.getAttribute('data-theme') === 'dark') {
+        html.removeAttribute('data-theme');
+        icon.className = 'fas fa-moon';
+        localStorage.setItem('theme', 'light');
+    } else {
+        html.setAttribute('data-theme', 'dark');
+        icon.className = 'fas fa-sun';
+        localStorage.setItem('theme', 'dark');
+    }
+    if (BM.charts) BM.refreshColors();
+}
+(function initTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelector('.dark-mode-toggle i').className = 'fas fa-sun';
+        });
+    }
+})();
+function toggleMenu() {
+    document.getElementById('main-nav').classList.toggle('active');
+    document.querySelector('.menu-toggle').classList.toggle('active');
+}
+function closeMenu() {
+    document.getElementById('main-nav').classList.remove('active');
+    document.querySelector('.menu-toggle').classList.remove('active');
+}
+document.addEventListener('click', function (e) {
+    const nav = document.getElementById('main-nav');
+    const t = document.querySelector('.menu-toggle');
+    if (!nav.contains(e.target) && !t.contains(e.target)) closeMenu();
+});
+window.addEventListener('resize', function () { if (window.innerWidth > 900) closeMenu(); });
+
+/* ============================ benchmark app ============================ */
+const BM = {
+    data: null,
+    trackKeys: [],
+    curTrack: null,
+    scope: 10,
+    ref: 'best_vanilla_only',
+    directOnly: false,
+    sortKey: 'autoattack_acc',
+    sortDir: -1,
+    charts: { scatter: null, bar: null },
+};
+
+/* reference definitions: how to resolve a scalar ref value for a track.
+   kind: 'scalar' (one vertical line) or 'arch' (per-model). */
+const BM_REFS = [
+    { key: 'best_all',             label: 'Best',              group: 'All vanilla entries', groupShort: 'all',  path: ['vanilla_refs','all','best'] },
+    { key: 'median_all',           label: 'Median',                    group: 'All vanilla entries', groupShort: 'all',  path: ['vanilla_refs','all','median'] },
+    { key: 'mean_all',             label: 'Mean',                      group: 'All vanilla entries', groupShort: 'all',  path: ['vanilla_refs','all','mean'] },
+    { key: 'top10_min_all',        label: 'Top-10 min',                group: 'Top-10 entries', groupShort: 'top-10',  path: ['vanilla_refs','all','top10_min'] },
+    { key: 'top10_mean_all',       label: 'Top-10 mean',               group: 'Top-10 entries', groupShort: 'top-10',  path: ['vanilla_refs','all','top10_mean'] },
+    { key: 'top10_median_all',     label: 'Top-10 median',             group: 'Top-10 entries', groupShort: 'top-10',  path: ['vanilla_refs','all','top10_median'] },
+    { key: 'best_vanilla_only',    label: 'Best',      group: 'Vanilla (no extra data)', groupShort: 'no extra data', path: ['vanilla_refs','vanilla_only','best'] },
+    { key: 'median_vanilla_only',  label: 'Median',    group: 'Vanilla (no extra data)', groupShort: 'no extra data', path: ['vanilla_refs','vanilla_only','median'] },
+    { key: 'top10_median_vanilla_only', label: 'Top-10 median', group: 'Vanilla (no extra data)', groupShort: 'no extra data', path: ['vanilla_refs','vanilla_only','top10_median'] },
+    { key: 'arch_matched',         label: 'Architecture-matched',     group: 'Architecture', groupShort: 'arch', kind: 'arch' },
+];
+
+/* coloured swatches for reference lines (stable palette) */
+const BM_REF_COLORS = {
+    best_all: '#e74c3c',
+    median_all: '#f39c12',
+    mean_all: '#9b59b6',
+    top10_min_all: '#1abc9c',
+    top10_mean_all: '#34495e',
+    top10_median_all: '#16a085',
+    best_vanilla_only: '#c0392b',
+    median_vanilla_only: '#e67e22',
+    top10_median_vanilla_only: '#d35400',
+    arch_matched: '#2c3e50',
+};
+
+function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function themeColors() {
+    return {
+        text: cssVar('--text-primary') || '#333',
+        muted: cssVar('--text-muted') || '#777',
+        grid: cssVar('--card-border') || '#ccc',
+        accent: cssVar('--accent') || '#007BFF',
+        cardBg: cssVar('--card-bg') || '#f8f9fa',
+    };
+}
+
+function yearColor(year, minYear, maxYear) {
+    if (!year) return '#999';
+    const t = (maxYear === minYear) ? 0.5 : (year - minYear) / (maxYear - minYear);
+    /* interpolate blue -> red across the year range */
+    const r = Math.round(46 + (231 - 46) * t);
+    const g = Math.round(120 + (76 - 120) * t);
+    const b = Math.round(205 + (60 - 205) * t);
+    return `rgb(${r},${g},${b})`;
+}
+
+function getRefScalar(track, refKey) {
+    const def = BM_REFS.find(r => r.key === refKey);
+    if (!def) return null;
+    if (def.kind === 'arch') return null;
+    let v = track;
+    for (const p of def.path) { v = (v == null) ? null : v[p]; }
+    return (v == null) ? null : Number(v);
+}
+
+function modelsInView(track) {
+    let models = track.robust_models;
+    if (BM.directOnly) {
+        models = models.filter(m => !m.arch_match_is_proxy);
+    }
+    return models.slice(0, BM.scope);
+}
+
+function fmt(v, d) {
+    if (v == null || isNaN(v)) return '\u2014';
+    return Number(v).toFixed(d ?? 2);
+}
+
+function deltaStr(v) {
+    if (v == null || isNaN(v)) return { txt: '\u2014', cls: 'bm-na' };
+    const s = (v >= 0 ? '+' : '') + v.toFixed(2);
+    return { txt: s, cls: v < 0 ? 'bm-delta-neg' : 'bm-delta-pos' };
+}
+
+/* ---------------- load ---------------- */
+async function load() {
+    try {
+        const r = await fetch('data/benchmark.json');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        BM.data = await r.json();
+    } catch (e) {
+        document.getElementById('bm-loading').style.display = 'none';
+        const err = document.getElementById('bm-error');
+        err.style.display = 'block';
+        err.textContent = 'Failed to load data/benchmark.json: ' + e.message +
+            '. Run python scripts/scrape_benchmarks.py first.';
+        return;
+    }
+    const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+    document.getElementById('bm-gen').textContent =
+        'Generated: ' + BM.data.generated_at;
+    document.getElementById('bm-loading').style.display = 'none';
+    document.getElementById('bm-content').style.display = 'block';
+
+    BM.trackKeys = Object.keys(BM.data.tracks);
+    buildTrackTabs();
+    buildRefSelector();
+    BM.curTrack = BM.data.tracks[BM.trackKeys[0]];
+    document.getElementById('bm-scope').addEventListener('change', e => { BM.scope = +e.target.value; render(); });
+    document.getElementById('bm-ref').addEventListener('change', e => { BM.ref = e.target.value; render(); });
+    document.getElementById('bm-direct-only').addEventListener('change', e => { BM.directOnly = e.target.checked; render(); });
+    render();
+}
+
+function buildTrackTabs() {
+    const wrap = document.getElementById('bm-track-tabs');
+    wrap.innerHTML = '';
+    BM.trackKeys.forEach((k, i) => {
+        const t = BM.data.tracks[k];
+        const b = document.createElement('button');
+        b.className = 'bm-tab' + (i === 0 ? ' active' : '');
+        b.textContent = t.label + '  (' + t.robust_count + ')';
+        b.dataset.key = k;
+        b.onclick = () => {
+            BM.curTrack = BM.data.tracks[k];
+            wrap.querySelectorAll('.bm-tab').forEach(x => x.classList.remove('active'));
+            b.classList.add('active');
+            render();
+        };
+        wrap.appendChild(b);
+    });
+}
+
+function buildRefSelector() {
+    const sel = document.getElementById('bm-ref');
+    const groups = {};
+    BM_REFS.forEach(r => { (groups[r.group] = groups[r.group] || []).push(r); });
+    sel.innerHTML = '';
+    Object.keys(groups).forEach(g => {
+        const og = document.createElement('optgroup');
+        og.label = g;
+        groups[g].forEach(r => {
+            const o = document.createElement('option');
+            o.value = r.key; o.textContent = r.label;
+            if (r.key === BM.ref) o.selected = true;
+            og.appendChild(o);
+        });
+        sel.appendChild(og);
+    });
+}
+
+/* ---------------- render ---------------- */
+function render() {
+    renderScatter();
+    renderBar();
+    renderTable();
+    renderLegend();
+}
+
+function renderLegend() {
+    const box = document.getElementById('bm-scatter-legend');
+    const t = BM.curTrack;
+    const parts = [];
+    if (BM.yearRange) {
+        const yr = BM.yearRange;
+        if (yr.hasData && yr.min !== yr.max) {
+            parts.push('<span class="bm-year-legend"><span>publication year</span>' +
+                '<span class="bm-year-bar"></span><span class="bm-year-labels"><b>' + yr.min +
+                '</b>&nbsp;&hellip;&nbsp;<b>' + yr.max + '</b></span></span>');
+        } else if (yr.hasData) {
+            parts.push('<span class="bm-year-legend"><span class="bm-year-dot" style="background:' +
+                yearColor(yr.min, yr.min, yr.max) + '"></span>publication year: <b>' + yr.min + '</b></span>');
+        }
+        parts.push('<span class="bm-year-na"><span class="bm-swatch" style="background:#999"></span>unknown year</span>');
+    }
+    ['best_all', 'best_vanilla_only', 'top10_median_vanilla_only'].forEach(k => {
+        const v = getRefScalar(t, k);
+        const def = BM_REFS.find(r => r.key === k);
+        if (v != null) {
+            parts.push('<span><span class="bm-swatch" style="background:' + BM_REF_COLORS[k] + '"></span>' +
+                def.label + ' (' + def.groupShort + '): ' + fmt(v, 2) + '%</span>');
+        }
+    });
+    const nShown = modelsInView(t).length;
+    const nRobust = t.robust_count;
+    const nTxt = BM.directOnly
+        ? nShown + '/' + nRobust + ' (direct match)'
+        : String(nRobust);
+    parts.push('<span class="text-muted">n(robust)=' + nTxt + ' &middot; n(vanilla all)=' +
+        t.vanilla_refs.all.n + ' &middot; n(vanilla, no extra data)=' + t.vanilla_refs.vanilla_only.n + '</span>');
+    box.innerHTML = parts.join('');
+}
+
+function renderScatter() {
+    const t = BM.curTrack;
+    const models = modelsInView(t);
+    const c = themeColors();
+    const years = models.map(m => m.year).filter(y => y);
+    const yMin = years.length ? Math.min.apply(null, years) : 2019;
+    const yMax = years.length ? Math.max.apply(null, years) : 2024;
+    BM.yearRange = { min: yMin, max: yMax, hasData: years.length > 0 };
+
+    const pts = models.filter(m => !isNaN(m.clean_acc) && !isNaN(m.autoattack_acc))
+        .map(m => ({ x: m.clean_acc, y: m.autoattack_acc, model: m }));
+
+    /* ref line(s): selected + always best_vanilla_only for context (if different) */
+    const refLines = [];
+    const addLine = (key) => {
+        const v = getRefScalar(t, key);
+        if (v != null) refLines.push({ x: v, color: BM_REF_COLORS[key], label: BM_REFS.find(r => r.key === key).label + ' (' + BM_REFS.find(r => r.key === key).groupShort + ')' });
+    };
+    addLine(BM.ref);
+    if (BM.ref !== 'best_vanilla_only' && BM.ref !== 'arch_matched') addLine('best_vanilla_only');
+    if (BM.ref === 'arch_matched') {
+        /* arch is per-model: show no scalar line, marker note handled in legend */
+    }
+
+    const datasets = [{
+        label: 'Robust models',
+        data: pts,
+        backgroundColor: pts.map(p => yearColor(p.model.year, yMin, yMax)),
+        borderColor: pts.map(p => yearColor(p.model.year, yMin, yMax)),
+        pointRadius: 6,
+        pointHoverRadius: 9,
+    }];
+    refLines.forEach(rl => {
+        /* vertical line as a thin line dataset from yMin to yMax */
+        const ys = pts.map(p => p.y);
+        const yL = Math.min.apply(null, ys.concat([0])) - 2;
+        const yH = Math.max.apply(null, ys.concat([100])) + 2;
+        datasets.push({
+            label: rl.label,
+            data: [{ x: rl.x, y: yL }, { x: rl.x, y: yH }],
+            showLine: true,
+            fill: false,
+            borderColor: rl.color,
+            borderDash: [6, 4],
+            pointRadius: 0,
+            borderWidth: 2,
+        });
+    });
+
+    const ctx = document.getElementById('bm-scatter').getContext('2d');
+    if (BM.charts.scatter) BM.charts.scatter.destroy();
+    BM.charts.scatter = new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets: datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'linear', title: { display: true, text: 'Standard / clean accuracy (%)', color: c.text },
+                    grid: { color: c.grid }, ticks: { color: c.muted },
+                },
+                y: {
+                    type: 'linear', title: { display: true, text: 'Robust accuracy (AutoAttack, %)', color: c.text },
+                    grid: { color: c.grid }, ticks: { color: c.muted },
+                },
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (ctx) {
+                            const p = ctx.raw;
+                            if (!p.model) return ctx.dataset.label + ': x=' + fmt(p.x, 2);
+                            const m = p.model;
+                            return [
+                                m.display_name,
+                                'arch: ' + (m.architecture || '?'),
+                                'venue: ' + (m.venue || '?') + ' (' + (m.year || '?') + ')',
+                                'clean: ' + fmt(m.clean_acc, 2) + '%',
+                                'autoattack: ' + fmt(m.autoattack_acc, 2) + '%',
+                                '(' + (m.unreliable ? 'flagged unreliable' : 'verified') + ')',
+                            ];
+                        }
+                    }
+                },
+            },
+        }
+    });
+}
+
+function renderBar() {
+    const t = BM.curTrack;
+    const models = modelsInView(t);
+    const c = themeColors();
+    const labels = models.map(m => m.display_name);
+    const clean = models.map(m => m.clean_acc);
+    const robust = models.map(m => m.autoattack_acc);
+
+    const datasets = [
+        { label: 'Clean acc', data: clean, backgroundColor: 'rgba(0,123,255,0.7)', borderColor: 'rgba(0,123,255,1)', borderWidth: 1 },
+        { label: 'Robust acc (AutoAttack)', data: robust, backgroundColor: 'rgba(231,76,60,0.7)', borderColor: 'rgba(231,76,60,1)', borderWidth: 1 },
+    ];
+    /* selected reference annotation (scalar -> repeated bar via mixed line dataset) */
+    let refVal = getRefScalar(t, BM.ref);
+    let refLabel = BM_REFS.find(r => r.key === BM.ref).label + ' (' + BM_REFS.find(r => r.key === BM.ref).groupShort + ')';
+    if (BM.ref === 'arch_matched') {
+        /* per-model arch: show as its own bar series */
+        datasets.push({
+            label: 'Arch-matched std acc', data: models.map(m => m.arch_match_std_acc),
+            backgroundColor: 'rgba(44,62,80,0.55)', borderColor: 'rgba(44,62,80,1)', borderWidth: 1,
+        });
+        refVal = null;
+    }
+    if (refVal != null) {
+        datasets.push({
+            label: refLabel, data: models.map(() => refVal),
+            type: 'line', borderColor: BM_REF_COLORS[BM.ref], borderDash: [6, 4],
+            fill: false, pointRadius: 0, borderWidth: 2, showLine: true, spanGaps: true,
+        });
+    }
+
+    const ctx = document.getElementById('bm-bar').getContext('2d');
+    if (BM.charts.bar) BM.charts.bar.destroy();
+    BM.charts.bar = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: labels, datasets: datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                x: { grid: { color: c.grid }, ticks: { color: c.muted, maxRotation: 60, minRotation: 30, autoSkip: false, font: { size: 9 } } },
+                y: { title: { display: true, text: 'accuracy (%)', color: c.text }, grid: { color: c.grid }, ticks: { color: c.muted }, min: Math.max(0, Math.min.apply(null, robust.filter(v => !isNaN(v))) - 5) },
+            },
+            plugins: {
+                legend: { labels: { color: c.text } },
+                tooltip: { callbacks: { label: (ctx) => ctx.dataset.label + ': ' + fmt(ctx.raw, 2) + '%' } },
+            },
+        }
+    });
+}
+
+function renderTable() {
+    const t = BM.curTrack;
+    const models = modelsInView(t);
+    const refScalar = getRefScalar(t, BM.ref);
+
+    const cols = [
+        { key: 'display_name', label: 'Model', cls: 'bm-col-name', sortable: true, render: m => m.display_name },
+        { key: 'architecture', label: 'Architecture', cls: 'bm-col-name', sortable: true, render: m => m.architecture || '\u2014' },
+        { key: 'venue', label: 'Venue', sortable: true, render: m => m.venue || '\u2014' },
+        { key: 'year', label: 'Year', sortable: true, render: m => m.year || '\u2014' },
+        { key: 'clean_acc', label: 'Clean %', sortable: true, num: true, render: m => fmt(m.clean_acc) },
+        { key: 'autoattack_acc', label: 'Robust %', sortable: true, num: true, render: m => fmt(m.autoattack_acc) + (m.unreliable ? '<span class="bm-unreliable" title="flagged unreliable by RobustBench">!</span>' : '') },
+        { key: 'reported_acc', label: 'Reported %', sortable: true, num: true, render: m => fmt(m.reported_acc) },
+        { key: 'extra_data', label: 'Extra data', sortable: true, render: m => m.additional_data ? 'yes' : 'no' },
+        { key: 'delta_ref', label: deltaColLabel(), sortable: true, num: true, render: m => {
+            const r = (BM.ref === 'arch_matched') ? m.arch_match_std_acc : refScalar;
+            const d = (r == null || isNaN(m.clean_acc)) ? null : m.clean_acc - r;
+            const ds = deltaStr(d);
+            const tip = (BM.ref === 'arch_matched') ? archTooltip(m) : '';
+            return '<span class="' + ds.cls + ' bm-num"' + tip + '>' + ds.txt + '</span>';
+        } },
+        { key: 'arch_match_std_acc', label: 'Arch-std %', sortable: true, num: true, render: m => {
+            const tip = archTooltip(m);
+            return '<span class="bm-num"' + tip + '>' + fmt(m.arch_match_std_acc) + '</span>';
+        } },
+        { key: 'temporal_best', label: 'Vanilla-SOTA (as of year)', sortable: true, num: true, render: m => {
+            const tb = temporalBestFor(m.year);
+            const tip = temporalTip(tb);
+            return '<span class="bm-num"' + tip + '>' + fmt(tb ? tb.val : null) + '</span>';
+        } },
+        { key: 'links', label: 'Links', cls: 'bm-col-name', sortable: false, render: m => {
+            const a = m.link ? '<a class="bm-link" href="' + m.link + '" target="_blank">arXiv</a>' : '';
+            return a;
+        } },
+    ];
+
+    /* header */
+    const thead = document.getElementById('bm-thead');
+    thead.innerHTML = '';
+    cols.forEach(col => {
+        const th = document.createElement('th');
+        th.textContent = col.label;
+        if (col.cls) th.className = col.cls;
+        if (col.sortable) {
+            th.classList.add('bm-sortable');
+            if (col.key === BM.sortKey) {
+                th.classList.add('bm-sorted');
+                if (BM.sortDir === 1) th.classList.add('bm-sort-asc');
+            }
+            th.onclick = () => {
+                if (BM.sortKey === col.key) BM.sortDir = -BM.sortDir;
+                else { BM.sortKey = col.key; BM.sortDir = col.key === 'display_name' || col.key === 'architecture' || col.key === 'venue' ? 1 : -1; }
+                renderTable();
+            };
+        }
+        thead.appendChild(th);
+    });
+
+    /* sort */
+    const sorted = models.slice().sort((a, b) => cmpVal(a, b, BM.sortKey, BM.sortDir));
+
+    const tbody = document.getElementById('bm-tbody');
+    tbody.innerHTML = '';
+    sorted.forEach(m => {
+        const tr = document.createElement('tr');
+        cols.forEach(col => {
+            const td = document.createElement('td');
+            if (col.cls) td.className = col.cls;
+            if (col.num) td.classList.add('bm-num');
+            td.innerHTML = col.render(m);
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+}
+
+function deltaColLabel() {
+    return (BM.ref === 'arch_matched') ? '\u0394 clean \u2212 arch-std' : '\u0394 clean \u2212 ref';
+}
+
+function escAttr(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function archTooltip(m) {
+    const am = m.arch_match;
+    if (!am) return '';
+    const realArch = am.is_proxy
+        ? escAttr(am.real_matched_arch || am.matched_arch || (m.architecture || '\u2014'))
+        : escAttr(am.matched_arch || (m.architecture || '\u2014'));
+    const src = escAttr(am.source || am.source_note || '\u2014');
+    return ' title="matched architecture: ' + realArch + '\nsource: ' + src + '"';
+}
+
+function temporalBestFor(year) {
+    if (!year) return null;
+    const by = BM.curTrack.vanilla_refs_by_year || {};
+    /* find latest year <= year present in map */
+    let best = null;
+    let bestEntry = null;
+    let bestYear = null;
+    Object.keys(by).forEach(yk => {
+        const y = +yk;
+        if (y <= year) {
+            const v = by[yk].best;
+            if (v != null && (best == null || v > best)) { best = v; bestEntry = by[yk].best_entry || null; bestYear = y; }
+        }
+    });
+    /* fall back to vanilla (no extra data) best overall if nothing matched */
+    if (best == null) return null;
+    return { val: best, entry: bestEntry, refYear: bestYear };
+}
+
+function temporalTip(tb) {
+    if (!tb || !tb.entry) return '';
+    const e = tb.entry;
+    const parts = ['model: ' + (e.model_name || '\u2014')];
+    if (e.year) parts.push('year: ' + e.year);
+    parts.push('extra data: ' + (e.uses_additional_data ? 'yes' : 'no'));
+    if (e.arxiv_id) parts.push('arXiv: ' + e.arxiv_id);
+    return ' title="' + escAttr(parts.join('\n')) + '"';
+}
+
+function cmpVal(a, b, key, dir) {
+    let va, vb;
+    switch (key) {
+        case 'delta_ref': {
+            const r = (BM.ref === 'arch_matched');
+            va = r ? a.arch_match_std_acc : getRefScalar(BM.curTrack, BM.ref);
+            va = (va == null || isNaN(a.clean_acc)) ? null : a.clean_acc - va;
+            vb = r ? b.arch_match_std_acc : getRefScalar(BM.curTrack, BM.ref);
+            vb = (vb == null || isNaN(b.clean_acc)) ? null : b.clean_acc - vb;
+            break;
+        }
+        case 'temporal_best': va = (temporalBestFor(a.year) || {}).val || null; vb = (temporalBestFor(b.year) || {}).val || null; break;
+        case 'extra_data': va = a.additional_data ? 1 : 0; vb = b.additional_data ? 1 : 0; break;
+        case 'links': return 0;
+        case 'display_name':
+        case 'architecture':
+        case 'venue':
+            va = (a[key] || '').toString().toLowerCase();
+            vb = (b[key] || '').toString().toLowerCase();
+            return va < vb ? -dir : va > vb ? dir : 0;
+        default:
+            va = a[key]; vb = b[key];
+    }
+    if (va == null || isNaN(va)) va = dir === 1 ? Infinity : -Infinity;
+    if (vb == null || isNaN(vb)) vb = dir === 1 ? Infinity : -Infinity;
+    return (va - vb) * dir;
+}
+
+BM.refreshColors = function () { render(); };
+
+document.addEventListener('DOMContentLoaded', load);
+</script>
+
+</body>
+</html>
