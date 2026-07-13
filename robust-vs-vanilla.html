@@ -51,7 +51,11 @@
                     <em>vanilla (no extra data)</em> models, and a hand-curated
                     <em>architecture-matched</em> baseline whose standard accuracies are taken from the
                     <a href="https://docs.pytorch.org/vision/stable/models.html#table-of-all-available-classification-weights" target="_blank">torchvision model zoo</a>
-                    for ImageNet and from the original architecture papers for CIFAR). Robust accuracy is the standardized AutoAttack value.
+                    for ImageNet, CIFAR-10/100 data from
+                    <a href="https://github.com/kuangliu/pytorch-cifar/tree/master" target="_blank">kuangliu/pytorch-cifar</a>
+                    and
+                    <a href="https://github.com/weiaicunzai/pytorch-cifar100" target="_blank">weiaicunzai/pytorch-cifar100</a> and from the original architecture papers for CIFAR-10/100 and ImageNet.
+                    Robust accuracy is the standardized AutoAttack value.
                 </p>
 
                 <div id="bm-loading" class="bm-loading">Loading data...</div>
@@ -125,7 +129,11 @@
                         (image-classification leaderboards for CIFAR-10, CIFAR-100, ImageNet-1k).
                         (ImageNet values from the
                         <a href="https://docs.pytorch.org/vision/stable/models.html#table-of-all-available-classification-weights" target="_blank">torchvision model zoo</a>,
-                        CIFAR values from the original architecture papers) Note
+                       CIFAR-10/100 data from
+                    <a href="https://github.com/kuangliu/pytorch-cifar/tree/master" target="_blank">kuangliu/pytorch-cifar</a>
+                    and
+                    <a href="https://github.com/weiaicunzai/pytorch-cifar100" target="_blank">weiaicunzai/pytorch-cifar100</a> and from the original architecture papers for CIFAR-10/100 and ImageNet.
+                        Note
                         that Papers with Code's leaderboards are now curated/trimmed by Hugging Face, so reference
                         statistics reflect the live curated boards rather than an exhaustive historical list.
                         <span class="bm-gen" id="bm-gen"></span>
