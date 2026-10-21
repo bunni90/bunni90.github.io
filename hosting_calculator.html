@@ -1,0 +1,3159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Hoster Cost Comparison &mdash; Niklas Bunzel</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <header>
+        <div class="menu-bar">
+            <h1 class="logo"><a href="index.html" style="color:inherit;text-decoration:none;">Niklas Bunzel</a></h1>
+            <div class="menu-toggle" onclick="toggleMenu()">
+                <span></span><span></span><span></span>
+            </div>
+            <nav id="main-nav">
+                <ul>
+                    <li><a href="index.html#home" onclick="closeMenu()">Home</a></li>
+                    <li><a href="index.html#research" onclick="closeMenu()">Research</a></li>
+                    <li><a href="index.html#software" onclick="closeMenu()">Software</a></li>
+                    <li><a href="index.html#talks" onclick="closeMenu()">Talks</a></li>
+     				<li><a href="index.html#training" onclick="closeMenu()">Training</a></li>
+                    <li><a href="index.html#services" onclick="closeMenu()">Services</a></li>
+                    <li><a href="index.html#cv" onclick="closeMenu()">CV</a></li>
+                   <!-- <li><a href="index.html#demos" onclick="closeMenu()">Demos</a></li> -->
+                    <li><a href="index.html#publications" onclick="closeMenu()">Publications</a></li>
+                    <li><a href="robust-vs-vanilla.html" onclick="closeMenu()">VanillaBench</a></li>
+                    <li><a href="hosting_calculator.html" onclick="closeMenu()">LLM Costs</a></li>
+                </ul>
+            </nav>
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </header>
+
+<main>
+    <div class="hc-wrap">
+        <section id="hosting" class="section">
+            <h2>LLM Hoster Cost Comparison</h2>
+            <p class="hc-intro">
+                Compare what hosting an LLM costs across providers: pick one or more models,
+                optionally filter by hoster and plan type, and enter your monthly token usage
+                (input, cached and output). Every matching offer is listed with its itemized
+                monthly cost &mdash; pay-as-you-go at per-token rates, subscriptions including
+                quota, overage and hard caps. The Score and Cost/Success columns are based on
+                LiveBench 2.0 evaluations. Scroll on the right chart to extend the usage range.
+            </p>
+
+
+  <!-- ============ CALCULATOR VIEW ============ -->
+  <section id="view-calculator" class="view">
+
+    <div class="panel inputs-panel">
+      <div class="inputs-grid">
+        <div class="field field-model">
+          <label id="lbl-model">Model <span class="label-hint">(pick one or more)</span></label>
+          <div class="msel" id="msel-model"></div>
+        </div>
+        <div class="field">
+          <label for="sel-hoster">Hoster <span class="label-hint">(filter)</span></label>
+          <select id="sel-hoster"></select>
+        </div>
+        <div class="field">
+          <label for="sel-type">Type <span class="label-hint">(filter)</span></label>
+          <select id="sel-type"></select>
+        </div>
+        <div class="field">
+          <label for="in-input">Input tokens / month</label>
+          <input id="in-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="in-cached">Cached tokens / month</label>
+          <input id="in-cached" type="text" inputmode="decimal" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="in-output">Output tokens / month</label>
+          <input id="in-output" type="text" inputmode="decimal" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="sel-nocache">No cache - bill at</label>
+          <select id="sel-nocache">
+            <option value="input">input rate</option>
+            <option value="output">output rate</option>
+          </select>
+        </div>
+      </div>
+      <div id="match-info" class="match-info"></div>
+    </div>
+
+    <div id="summary-cards" class="summary-cards"></div>
+
+    <div class="panel table-panel">
+      <div class="panel-head">
+        <h2 id="offers-title">Offers for selected model</h2>
+      </div>
+      <div class="table-scroll">
+        <table class="offers-table" id="offers-table">
+          <thead>
+            <tr>
+              <th class="col-hoster sortable" data-sort="hoster" title="Sort by hoster">Hoster</th>
+              <th class="col-model sortable" data-sort="model" title="Sort by model">Model</th>
+              <th class="col-type sortable" data-sort="type" title="Sort by type">Type</th>
+              <th class="num sortable" data-sort="livebenchScore" title="Overall score from LiveBench 2.0 (higher is better). Only available for models that were evaluated.">Score</th>
+              <th class="num sortable" data-sort="livebenchCostSuccess" title="Cost per successful task, based on LiveBench&#39;s evaluation and their reference pricing (USD, converted to EUR). The actual cost per successful task may differ for the providers listed here, and the price may change due to currency conversion.">Cost/Success</th>
+              <th class="num sortable" data-sort="total" title="Sort by total cost">Total</th>
+              <th class="num sortable" data-sort="vsBest" title="Sort by difference to cheapest offer">vs best</th>
+              <th class="num sortable" data-sort="effPer1M" title="Sort by effective cost per 1M total tokens">Eff. / 1M</th>
+              <th class="num sortable" data-sort="input" title="Sort by input cost">Input</th>
+              <th class="num sortable" data-sort="cached" title="Sort by cached cost">Cached</th>
+              <th class="num sortable" data-sort="output" title="Sort by output cost">Output</th>
+              <th class="num sortable" data-sort="fee" title="Sort by monthly fee">Fee</th>
+              <th class="num sortable" data-sort="overage" title="Sort by overage cost">Overage</th>
+              <th class="num sortable" data-sort="quotaUsed" title="Sort by quota usage">Quota used</th>
+              
+            </tr>
+          </thead>
+          <tbody id="offers-tbody"></tbody>
+        </table>
+      </div>
+      <div class="legend-row">
+        <span class="legend-item"><span class="dot dot-best"></span> cheapest offer</span>
+        <span class="legend-item"><span class="dot dot-muted"></span> over quota (hard cap, excluded)</span>
+        <span class="legend-item" id="legend-nocache"><span class="badge badge-warn">no cache</span> cached tokens billed at input rate</span>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="panel chart-box">
+        <h2>Total cost per offer</h2>
+        <p class="chart-sub">Monthly cost at your entered volumes.</p>
+        <canvas id="chart-bar" height="300"></canvas>
+        <div class="chart-tip" hidden></div>
+      </div>
+      <div class="panel chart-box">
+        <h2>Cost vs usage</h2>
+        <p class="chart-sub">Total tokens / month at your entered in&nbsp;/ cached / out mix. Scroll on the chart: to the right extends the token range, to the left reduces it. Dashed lines: hard-capped subscriptions (line ends at the quota).</p>
+        <canvas id="chart-line" height="320"></canvas>
+        <div class="chart-tip" hidden></div>
+      </div>
+    </div>
+  </section>
+
+            <div class="hc-footnote">
+                <strong>Pricing data:</strong> embedded directly in this page (no external
+                requests). Prices change frequently &mdash; verify with the hosters before
+                deciding.
+                <span class="hc-gen" id="hc-meta"></span>
+            </div>
+        </section>
+    </div>
+</main>
+
+<footer>
+    <p>&copy; 2026 Niklas Bunzel. All Rights Reserved.</p>
+</footer>
+
+<div id="toast-root"></div>
+
+<script>
+/* ============================ theme + menu ============================ */
+function toggleDarkMode() {
+    const html = document.documentElement;
+    const icon = document.querySelector('.dark-mode-toggle i');
+    if (html.getAttribute('data-theme') === 'dark') {
+        html.removeAttribute('data-theme');
+        icon.className = 'fas fa-moon';
+        localStorage.setItem('theme', 'light');
+    } else {
+        html.setAttribute('data-theme', 'dark');
+        icon.className = 'fas fa-sun';
+        localStorage.setItem('theme', 'dark');
+    }
+    /* re-render the calculator so the canvas charts pick up the new theme colors */
+    if (window.HC && HC.ready) HC.ui.refresh();
+}
+(function initTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelector('.dark-mode-toggle i').className = 'fas fa-sun';
+        });
+    }
+})();
+function toggleMenu() {
+    document.getElementById('main-nav').classList.toggle('active');
+    document.querySelector('.menu-toggle').classList.toggle('active');
+}
+function closeMenu() {
+    document.getElementById('main-nav').classList.remove('active');
+    document.querySelector('.menu-toggle').classList.remove('active');
+}
+document.addEventListener('click', function (e) {
+    const nav = document.getElementById('main-nav');
+    const t = document.querySelector('.menu-toggle');
+    if (!nav.contains(e.target) && !t.contains(e.target)) closeMenu();
+});
+window.addEventListener('resize', function () { if (window.innerWidth > 900) closeMenu(); });
+</script>
+
+<script>
+/* Global helpers: formatting, parsing, DOM utilities, toast. */
+(function () {
+  'use strict';
+
+  var HC = (window.HC = window.HC || {});
+
+  var format = { currency: '\u20ac', locale: 'de-DE' };
+
+  var escMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+  function esc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) { return escMap[c]; });
+  }
+
+  function has(value) {
+    return value !== null && value !== undefined && value !== '';
+  }
+
+  function num(value, fallback) {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : fallback;
+    var parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function numberFormatter(digits) {
+    try {
+      return new Intl.NumberFormat(format.locale, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: digits == null ? 2 : digits
+      });
+    } catch (e) {
+      return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: digits == null ? 2 : digits });
+    }
+  }
+
+  function fmtMoney(value, digits) {
+    if (!has(value) || typeof value !== 'number' || !Number.isFinite(value)) return '\u2014';
+    var nf = numberFormatter(digits == null ? 2 : digits);
+    return nf.format(value) + '\u2009' + format.currency;
+  }
+
+  function fmtNum(value, digits) {
+    if (!has(value) || typeof value !== 'number' || !Number.isFinite(value)) return '\u2014';
+    return numberFormatter(digits == null ? 2 : digits).format(value);
+  }
+
+  function fmtTokens(value) {
+    if (!has(value) || !Number.isFinite(value)) return '\u2014';
+    var abs = Math.abs(value);
+    var nf = numberFormatter(1);
+    if (abs >= 1e9) return nf.format(value / 1e9) + '\u2009B';
+    if (abs >= 1e6) return nf.format(value / 1e6) + '\u2009M';
+    if (abs >= 1e3) return nf.format(value / 1e3) + '\u2009k';
+    return String(Math.round(value));
+  }
+
+  function fmtPct(ratio) {
+    if (!has(ratio) || !Number.isFinite(ratio)) return '\u2014';
+    return Math.round(ratio * 100) + '\u2009%';
+  }
+
+  /* Accepts "72", "72M", "1,2B", "72.000.000", "72,000,000" ... */
+  function parseTokens(text) {
+    if (typeof text === 'number') return Number.isFinite(text) ? text : null;
+    if (!has(text)) return null;
+    var s = String(text).trim().toLowerCase().replace(/\s+/g, '');
+    var m = s.match(/^([0-9.,]+)([kmb])?$/);
+    if (!m) return null;
+    var body = m[1];
+    var mult = 1;
+    if (m[2] === 'k') mult = 1e3;
+    else if (m[2] === 'm') mult = 1e6;
+    else if (m[2] === 'b') mult = 1e9;
+    var sepCount = (body.match(/[.,]/g) || []).length;
+    if (sepCount > 1) body = body.replace(/[.,]/g, '');
+    else if (body.indexOf(',') >= 0) body = body.replace(',', '.');
+    var value = parseFloat(body);
+    if (!Number.isFinite(value)) return null;
+    return Math.round(value * mult);
+  }
+
+  /* Parse a spreadsheet-style numeric cell: strips currency, handles
+     thousands separators, decimal comma and percent suffixes. */
+  function parseNumberToken(text) {
+    if (text == null) return null;
+    if (typeof text === 'number') return Number.isFinite(text) ? text : null;
+    var s = String(text).trim();
+    if (!s || s === '-' || s === '\u2014' || s === '\u2013' || /^(n\/?a)$/i.test(s)) return null;
+    s = s.replace(/[\u20ac$\u00a3\u00a0\s]/g, '');
+    var negative = false;
+    if (s.charAt(0) === '(' && s.charAt(s.length - 1) === ')') { negative = true; s = s.slice(1, -1); }
+    var percent = false;
+    if (s.charAt(s.length - 1) === '%') { percent = true; s = s.slice(0, -1); }
+    if (!/^[0-9.,]+$/.test(s)) {
+      var raw = parseFloat(s.replace(',', '.'));
+      return Number.isFinite(raw) ? (negative ? -raw : raw) : null;
+    }
+    var dots = (s.match(/\./g) || []).length;
+    var commas = (s.match(/,/g) || []).length;
+    if (dots > 0 && commas > 0) {
+      s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+    } else if (commas > 1 || dots > 1) {
+      s = s.replace(/[.,]/g, '');
+    } else if (commas === 1) {
+      s = s.replace(',', '.');
+    }
+    var value = parseFloat(s);
+    if (!Number.isFinite(value)) return null;
+    if (percent) value = value / 100;
+    return negative ? -value : value;
+  }
+
+  function el(tag, attrs, html) {
+    var node = document.createElement(tag);
+    if (attrs) {
+      Object.keys(attrs).forEach(function (key) {
+        if (key === 'class') node.className = attrs[key];
+        else if (key.indexOf('on') === 0 && typeof attrs[key] === 'function') node.addEventListener(key.slice(2), attrs[key]);
+        else node.setAttribute(key, attrs[key]);
+      });
+    }
+    if (html != null) node.innerHTML = html;
+    return node;
+  }
+
+  function toast(message, kind) {
+    var root = document.getElementById('toast-root');
+    if (!root) return;
+    var node = el('div', { class: 'toast ' + (kind === 'err' ? 'toast-err' : 'toast-ok') }, esc(message));
+    root.appendChild(node);
+    setTimeout(function () {
+      node.style.transition = 'opacity .25s';
+      node.style.opacity = '0';
+      setTimeout(function () { node.remove(); }, 260);
+    }, 3200);
+  }
+
+  HC.util = {
+    esc: esc,
+    has: has,
+    num: num,
+    fmtMoney: fmtMoney,
+    fmtNum: fmtNum,
+    fmtTokens: fmtTokens,
+    fmtPct: fmtPct,
+    parseTokens: parseTokens,
+    parseNumberToken: parseNumberToken,
+    el: el,
+    toast: toast,
+    setFormat: function (patch) {
+      if (patch) Object.keys(patch).forEach(function (key) { format[key] = patch[key]; });
+    },
+    getFormat: function () { return Object.assign({}, format); }
+  };
+})();
+
+</script>
+<script>
+/* Generated - do not edit by hand. */
+window.HC_BASELINE_DATA = {
+ "meta": {
+  "generated": "2026-10-21T11:10:31+00:00",
+  "currency": "€",
+  "offerCount": 67,
+  "modelCount": 52
+ },
+ "models": [
+  "Qwen 3.8 27B",
+  "Qwen 3.6 35B A3B",
+  "DeepSeek V4.1 Flash",
+  "Apertus 70B",
+  "Gemma 4 26B A4B",
+  "GLM 5.3 754B",
+  "GPT-OSS 120B",
+  "Mistral 4 119B",
+  "DeepSeek V4 Flash",
+  "DeepSeek V4 Pro",
+  "DeepSeek V4 Pro 0813",
+  "DeepSeek V3.2",
+  "DeepSeek R1 0528",
+  "Mistral Small 3.2 24B instruct",
+  "Mistral Medium 3.5 128B",
+  "Mistral Large 3",
+  "Mistral Large 4",
+  "Mistral Small 4 119B",
+  "Ministral 3 8B",
+  "Pixtral 12B 2409",
+  "Ministral 3 3B",
+  "Ministral 3 14B",
+  "Voxtral Small 24b",
+  "Codestral 2508",
+  "Qwen 3 235B A22B instruct",
+  "Qwen 3.5 397B A17B",
+  "Qwen 3.5 9B",
+  "Qwen 3.5 122B A10B",
+  "Qwen 3 Coder 30B A3B",
+  "Qwen 3.8 Flash Next",
+  "Qwen 3.8 2.4T",
+  "Qwen 3 30B A3B instruct",
+  "GLM 5.3 Flash",
+  "GLM 5.3 753B",
+  "GLM 5.2",
+  "GLM 5",
+  "GLM 5.1",
+  "GLM 5V Turbo",
+  "GLM 5 Turbo",
+  "Kimi K3",
+  "Kimi K2.7 Code",
+  "Kimi K2.6",
+  "Kimi K2.5",
+  "Gemma-4-26b-a4b-it",
+  "Gemma 3 27b it",
+  "MiniMax M3",
+  "MiniMax M2.5",
+  "Llama 3.3 70B instruct",
+  "Llama 3.1 8B Instruct",
+  "NVIDIA Nemotron 3.5 Lightning 30B A3B BF16",
+  "Hermes 4 405B",
+  "MiniCPM-V 4.5"
+ ],
+ "offers": [
+  {
+   "id": "base-2",
+   "hoster": "AKI.IO",
+   "model": "Qwen 3.8 27B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.3,
+   "cachedPer1M": 0.1,
+   "outPer1M": 2.2,
+   "livebenchScore": 58.1,
+   "livebenchCostSuccess": 2.01
+  },
+  {
+   "id": "base-3",
+   "hoster": "AKI.IO",
+   "model": "Qwen 3.6 35B A3B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.15,
+   "cachedPer1M": null,
+   "outPer1M": 0.5,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-4",
+   "hoster": "AKI.IO",
+   "model": "DeepSeek V4.1 Flash",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.25,
+   "cachedPer1M": 0.1,
+   "outPer1M": 1.0,
+   "livebenchScore": 77.3,
+   "livebenchCostSuccess": 0.12
+  },
+  {
+   "id": "base-5",
+   "hoster": "AKI.IO",
+   "model": "Apertus 70B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.25,
+   "cachedPer1M": null,
+   "outPer1M": 2.0,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-6",
+   "hoster": "AKI.IO",
+   "model": "Gemma 4 26B A4B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.1,
+   "cachedPer1M": null,
+   "outPer1M": 0.5,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-7",
+   "hoster": "AKI.IO",
+   "model": "GLM 5.3 754B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.0,
+   "cachedPer1M": 0.25,
+   "outPer1M": 3.5,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-8",
+   "hoster": "AKI.IO",
+   "model": "GPT-OSS 120B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.15,
+   "cachedPer1M": null,
+   "outPer1M": 0.55,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-9",
+   "hoster": "AKI.IO",
+   "model": "Mistral 4 119B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.2,
+   "cachedPer1M": null,
+   "outPer1M": 0.6,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-10",
+   "hoster": "Weber-Cloud",
+   "model": "Qwen 3.8 27B",
+   "plan": "Starter",
+   "type": "SUBSCRIPTION",
+   "monthlyFee": 9.0,
+   "includedTokens": 5000000.0,
+   "inWeight": 0.5,
+   "cachedWeight": 0.15,
+   "outWeight": 1.0,
+   "overagePer1M": 0.0,
+   "inPer1M": null,
+   "cachedPer1M": null,
+   "outPer1M": null,
+   "livebenchScore": 58.1,
+   "livebenchCostSuccess": 2.01
+  },
+  {
+   "id": "base-11",
+   "hoster": "Weber-Cloud",
+   "model": "Qwen 3.8 27B",
+   "plan": "SME",
+   "type": "SUBSCRIPTION",
+   "monthlyFee": 35.0,
+   "includedTokens": 50000000.0,
+   "inWeight": 0.5,
+   "cachedWeight": 0.15,
+   "outWeight": 1.0,
+   "overagePer1M": 0.0,
+   "inPer1M": null,
+   "cachedPer1M": null,
+   "outPer1M": null,
+   "livebenchScore": 58.1,
+   "livebenchCostSuccess": 2.01
+  },
+  {
+   "id": "base-12",
+   "hoster": "Weber-Cloud",
+   "model": "Qwen 3.8 27B",
+   "plan": "Std",
+   "type": "SUBSCRIPTION",
+   "monthlyFee": 85.0,
+   "includedTokens": 125000000.0,
+   "inWeight": 0.5,
+   "cachedWeight": 0.15,
+   "outWeight": 1.0,
+   "overagePer1M": 0.0,
+   "inPer1M": null,
+   "cachedPer1M": null,
+   "outPer1M": null,
+   "livebenchScore": 58.1,
+   "livebenchCostSuccess": 2.01
+  },
+  {
+   "id": "base-13",
+   "hoster": "Weber-Cloud",
+   "model": "Qwen 3.8 27B",
+   "plan": "Pro",
+   "type": "SUBSCRIPTION",
+   "monthlyFee": 149.0,
+   "includedTokens": 300000000.0,
+   "inWeight": 0.5,
+   "cachedWeight": 0.15,
+   "outWeight": 1.0,
+   "overagePer1M": 0.0,
+   "inPer1M": null,
+   "cachedPer1M": null,
+   "outPer1M": null,
+   "livebenchScore": 58.1,
+   "livebenchCostSuccess": 2.01
+  },
+  {
+   "id": "base-14",
+   "hoster": "Weber-Cloud",
+   "model": "Qwen 3.8 27B",
+   "plan": "Enterprise",
+   "type": "SUBSCRIPTION",
+   "monthlyFee": 269.0,
+   "includedTokens": 600000000.0,
+   "inWeight": 0.5,
+   "cachedWeight": 0.15,
+   "outWeight": 1.0,
+   "overagePer1M": 0.0,
+   "inPer1M": null,
+   "cachedPer1M": null,
+   "outPer1M": null,
+   "livebenchScore": 58.1,
+   "livebenchCostSuccess": 2.01
+  },
+  {
+   "id": "base-15",
+   "hoster": "Weber-Cloud",
+   "model": "DeepSeek V4.1 Flash",
+   "plan": "Starter",
+   "type": "SUBSCRIPTION",
+   "monthlyFee": 9.0,
+   "includedTokens": 5000000.0,
+   "inWeight": 0.5,
+   "cachedWeight": 0.15,
+   "outWeight": 1.0,
+   "overagePer1M": 0.0,
+   "inPer1M": null,
+   "cachedPer1M": null,
+   "outPer1M": null,
+   "livebenchScore": 77.3,
+   "livebenchCostSuccess": 0.12
+  },
+  {
+   "id": "base-16",
+   "hoster": "Weber-Cloud",
+   "model": "DeepSeek V4.1 Flash",
+   "plan": "SME",
+   "type": "SUBSCRIPTION",
+   "monthlyFee": 35.0,
+   "includedTokens": 50000000.0,
+   "inWeight": 0.5,
+   "cachedWeight": 0.15,
+   "outWeight": 1.0,
+   "overagePer1M": 0.0,
+   "inPer1M": null,
+   "cachedPer1M": null,
+   "outPer1M": null,
+   "livebenchScore": 77.3,
+   "livebenchCostSuccess": 0.12
+  },
+  {
+   "id": "base-17",
+   "hoster": "Weber-Cloud",
+   "model": "DeepSeek V4.1 Flash",
+   "plan": "Std",
+   "type": "SUBSCRIPTION",
+   "monthlyFee": 85.0,
+   "includedTokens": 125000000.0,
+   "inWeight": 0.5,
+   "cachedWeight": 0.15,
+   "outWeight": 1.0,
+   "overagePer1M": 0.0,
+   "inPer1M": null,
+   "cachedPer1M": null,
+   "outPer1M": null,
+   "livebenchScore": 77.3,
+   "livebenchCostSuccess": 0.12
+  },
+  {
+   "id": "base-18",
+   "hoster": "Weber-Cloud",
+   "model": "DeepSeek V4.1 Flash",
+   "plan": "Pro",
+   "type": "SUBSCRIPTION",
+   "monthlyFee": 149.0,
+   "includedTokens": 300000000.0,
+   "inWeight": 0.5,
+   "cachedWeight": 0.15,
+   "outWeight": 1.0,
+   "overagePer1M": 0.0,
+   "inPer1M": null,
+   "cachedPer1M": null,
+   "outPer1M": null,
+   "livebenchScore": 77.3,
+   "livebenchCostSuccess": 0.12
+  },
+  {
+   "id": "base-19",
+   "hoster": "Weber-Cloud",
+   "model": "DeepSeek V4.1 Flash",
+   "plan": "Enterprise",
+   "type": "SUBSCRIPTION",
+   "monthlyFee": 269.0,
+   "includedTokens": 600000000.0,
+   "inWeight": 0.5,
+   "cachedWeight": 0.15,
+   "outWeight": 1.0,
+   "overagePer1M": 0.0,
+   "inPer1M": null,
+   "cachedPer1M": null,
+   "outPer1M": null,
+   "livebenchScore": 77.3,
+   "livebenchCostSuccess": 0.12
+  },
+  {
+   "id": "base-20",
+   "hoster": "HostYourAI",
+   "model": "DeepSeek V4 Flash",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.29,
+   "cachedPer1M": null,
+   "outPer1M": 0.35,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-21",
+   "hoster": "HostYourAI",
+   "model": "DeepSeek V4.1 Flash",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.58,
+   "cachedPer1M": null,
+   "outPer1M": 1.73,
+   "livebenchScore": 77.3,
+   "livebenchCostSuccess": 0.12
+  },
+  {
+   "id": "base-22",
+   "hoster": "HostYourAI",
+   "model": "DeepSeek V4 Pro",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 2.01,
+   "cachedPer1M": null,
+   "outPer1M": 4.03,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-23",
+   "hoster": "HostYourAI",
+   "model": "DeepSeek V4 Pro 0813",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 2.3,
+   "cachedPer1M": null,
+   "outPer1M": 4.6,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-24",
+   "hoster": "HostYourAI",
+   "model": "DeepSeek V3.2",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.35,
+   "cachedPer1M": null,
+   "outPer1M": 0.58,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-25",
+   "hoster": "HostYourAI",
+   "model": "DeepSeek R1 0528",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.76,
+   "cachedPer1M": null,
+   "outPer1M": 2.99,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-26",
+   "hoster": "HostYourAI",
+   "model": "Mistral Small 3.2 24B instruct",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.17,
+   "cachedPer1M": null,
+   "outPer1M": 0.4,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-27",
+   "hoster": "HostYourAI",
+   "model": "Mistral Medium 3.5 128B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.73,
+   "cachedPer1M": null,
+   "outPer1M": 8.63,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-28",
+   "hoster": "HostYourAI",
+   "model": "Mistral Large 3",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.58,
+   "cachedPer1M": null,
+   "outPer1M": 1.73,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-29",
+   "hoster": "HostYourAI",
+   "model": "Mistral Large 4",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.56,
+   "cachedPer1M": null,
+   "outPer1M": 4.81,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-30",
+   "hoster": "HostYourAI",
+   "model": "Mistral Small 4 119B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.23,
+   "cachedPer1M": null,
+   "outPer1M": 0.69,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-31",
+   "hoster": "HostYourAI",
+   "model": "Ministral 3 8B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.17,
+   "cachedPer1M": null,
+   "outPer1M": 0.17,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-32",
+   "hoster": "HostYourAI",
+   "model": "Pixtral 12B 2409",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.23,
+   "cachedPer1M": null,
+   "outPer1M": 0.23,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-33",
+   "hoster": "HostYourAI",
+   "model": "Ministral 3 3B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.12,
+   "cachedPer1M": null,
+   "outPer1M": 0.12,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-34",
+   "hoster": "HostYourAI",
+   "model": "Ministral 3 14B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.23,
+   "cachedPer1M": null,
+   "outPer1M": 0.23,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-35",
+   "hoster": "HostYourAI",
+   "model": "Voxtral Small 24b",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.1,
+   "cachedPer1M": null,
+   "outPer1M": 0.43,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-36",
+   "hoster": "HostYourAI",
+   "model": "Codestral 2508",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.35,
+   "cachedPer1M": null,
+   "outPer1M": 1.04,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-37",
+   "hoster": "HostYourAI",
+   "model": "Qwen 3 235B A22B instruct",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.86,
+   "cachedPer1M": null,
+   "outPer1M": 2.59,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-38",
+   "hoster": "HostYourAI",
+   "model": "Qwen 3.5 397B A17B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.69,
+   "cachedPer1M": null,
+   "outPer1M": 4.14,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-39",
+   "hoster": "HostYourAI",
+   "model": "Qwen 3.8 27B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.35,
+   "cachedPer1M": null,
+   "outPer1M": 2.53,
+   "livebenchScore": 58.1,
+   "livebenchCostSuccess": 2.01
+  },
+  {
+   "id": "base-40",
+   "hoster": "HostYourAI",
+   "model": "Qwen 3.5 9B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.17,
+   "cachedPer1M": null,
+   "outPer1M": 0.23,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-41",
+   "hoster": "HostYourAI",
+   "model": "Qwen 3.5 122B A10B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.58,
+   "cachedPer1M": null,
+   "outPer1M": 4.03,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-42",
+   "hoster": "HostYourAI",
+   "model": "Qwen 3 Coder 30B A3B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.23,
+   "cachedPer1M": null,
+   "outPer1M": 0.92,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-43",
+   "hoster": "HostYourAI",
+   "model": "Qwen 3.8 Flash Next",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.23,
+   "cachedPer1M": null,
+   "outPer1M": 0.58,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-44",
+   "hoster": "HostYourAI",
+   "model": "Qwen 3.6 35B A3B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.17,
+   "cachedPer1M": null,
+   "outPer1M": 0.58,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-45",
+   "hoster": "HostYourAI",
+   "model": "Qwen 3.8 2.4T",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 2.88,
+   "cachedPer1M": null,
+   "outPer1M": 6.9,
+   "livebenchScore": 64.2,
+   "livebenchCostSuccess": 1.39
+  },
+  {
+   "id": "base-46",
+   "hoster": "HostYourAI",
+   "model": "Qwen 3 30B A3B instruct",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.12,
+   "cachedPer1M": null,
+   "outPer1M": 0.35,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-47",
+   "hoster": "HostYourAI",
+   "model": "GLM 5.3 Flash",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.23,
+   "cachedPer1M": null,
+   "outPer1M": 0.58,
+   "livebenchScore": 70.6,
+   "livebenchCostSuccess": 0.13
+  },
+  {
+   "id": "base-48",
+   "hoster": "HostYourAI",
+   "model": "GLM 5.3 753B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.15,
+   "cachedPer1M": null,
+   "outPer1M": 4.03,
+   "livebenchScore": 60.7,
+   "livebenchCostSuccess": 1.84
+  },
+  {
+   "id": "base-49",
+   "hoster": "HostYourAI",
+   "model": "GLM 5.2",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.73,
+   "cachedPer1M": null,
+   "outPer1M": 5.18,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-50",
+   "hoster": "HostYourAI",
+   "model": "GLM 5",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.15,
+   "cachedPer1M": null,
+   "outPer1M": 3.68,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-51",
+   "hoster": "HostYourAI",
+   "model": "GLM 5.1",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.48,
+   "cachedPer1M": null,
+   "outPer1M": 4.66,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-52",
+   "hoster": "HostYourAI",
+   "model": "GLM 5V Turbo",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.38,
+   "cachedPer1M": null,
+   "outPer1M": 4.6,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-53",
+   "hoster": "HostYourAI",
+   "model": "GLM 5 Turbo",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.38,
+   "cachedPer1M": null,
+   "outPer1M": 4.6,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-54",
+   "hoster": "HostYourAI",
+   "model": "Kimi K3",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 3.45,
+   "cachedPer1M": null,
+   "outPer1M": 17.25,
+   "livebenchScore": 63.4,
+   "livebenchCostSuccess": 1.64
+  },
+  {
+   "id": "base-55",
+   "hoster": "HostYourAI",
+   "model": "Kimi K2.7 Code",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.44,
+   "cachedPer1M": null,
+   "outPer1M": 5.18,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-56",
+   "hoster": "HostYourAI",
+   "model": "Kimi K2.6",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.15,
+   "cachedPer1M": null,
+   "outPer1M": 4.6,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-57",
+   "hoster": "HostYourAI",
+   "model": "Kimi K2.5",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.58,
+   "cachedPer1M": null,
+   "outPer1M": 3.22,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-58",
+   "hoster": "HostYourAI",
+   "model": "Gemma-4-26b-a4b-it",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.12,
+   "cachedPer1M": null,
+   "outPer1M": 0.58,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-59",
+   "hoster": "HostYourAI",
+   "model": "Gemma 3 27b it",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.1,
+   "cachedPer1M": null,
+   "outPer1M": 0.32,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-60",
+   "hoster": "HostYourAI",
+   "model": "GPT-OSS 120B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.16,
+   "cachedPer1M": null,
+   "outPer1M": 0.63,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-61",
+   "hoster": "HostYourAI",
+   "model": "MiniMax M3",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.46,
+   "cachedPer1M": null,
+   "outPer1M": 2.3,
+   "livebenchScore": 52.6,
+   "livebenchCostSuccess": 1.79
+  },
+  {
+   "id": "base-62",
+   "hoster": "HostYourAI",
+   "model": "MiniMax M2.5",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.35,
+   "cachedPer1M": null,
+   "outPer1M": 1.38,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-63",
+   "hoster": "HostYourAI",
+   "model": "Llama 3.3 70B instruct",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.04,
+   "cachedPer1M": null,
+   "outPer1M": 1.04,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-64",
+   "hoster": "HostYourAI",
+   "model": "Llama 3.1 8B Instruct",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.17,
+   "cachedPer1M": null,
+   "outPer1M": 0.17,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-65",
+   "hoster": "HostYourAI",
+   "model": "NVIDIA Nemotron 3.5 Lightning 30B A3B BF16",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.07,
+   "cachedPer1M": null,
+   "outPer1M": 0.28,
+   "livebenchScore": 28.7,
+   "livebenchCostSuccess": 0.22
+  },
+  {
+   "id": "base-66",
+   "hoster": "HostYourAI",
+   "model": "Apertus 70B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.44,
+   "cachedPer1M": null,
+   "outPer1M": 2.3,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-67",
+   "hoster": "HostYourAI",
+   "model": "Hermes 4 405B",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 1.15,
+   "cachedPer1M": null,
+   "outPer1M": 3.45,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  },
+  {
+   "id": "base-68",
+   "hoster": "HostYourAI",
+   "model": "MiniCPM-V 4.5",
+   "plan": null,
+   "type": "PAYG",
+   "monthlyFee": null,
+   "includedTokens": null,
+   "inWeight": null,
+   "cachedWeight": null,
+   "outWeight": null,
+   "overagePer1M": null,
+   "inPer1M": 0.76,
+   "cachedPer1M": null,
+   "outPer1M": 1.28,
+   "livebenchScore": null,
+   "livebenchCostSuccess": null
+  }
+ ]
+};
+
+</script>
+<script>
+/* Dataset state: baseline (from data.js) plus the persisted calculator
+   view state. A localStorage dataset overlay from the removed editing UI
+   is still honored, but only while the baseline it was saved against is
+   the current build - a rebuild (new extraction timestamp in data.js)
+   always wins over stale browser data. */
+(function () {
+  'use strict';
+
+  var HC = (window.HC = window.HC || {});
+  var util = HC.util;
+
+  var KEY_DATASET = 'hc.dataset.v1';
+  var KEY_CALC = 'hc.calculator.v1';
+
+  function baseline() {
+    var base = window.HC_BASELINE_DATA;
+    return {
+      meta: Object.assign({}, base.meta),
+      models: base.models.slice(),
+      offers: base.offers.map(cloneOffer)
+    };
+  }
+
+  function cloneOffer(offer) {
+    var copy = {};
+    Object.keys(offer).forEach(function (key) { copy[key] = offer[key]; });
+    return copy;
+  }
+
+  function normalizeDataset(ds) {
+    if (!ds || !Array.isArray(ds.offers)) return null;
+    var seen = {};
+    var counter = 0;
+    ds.offers = ds.offers.map(function (offer) {
+      var clean = cloneOffer(offer);
+      clean.hoster = util.has(clean.hoster) ? String(clean.hoster) : 'Unknown';
+      clean.model = util.has(clean.model) ? String(clean.model) : 'Unknown';
+      clean.plan = util.has(clean.plan) ? String(clean.plan) : null;
+      clean.type = clean.type === 'SUBSCRIPTION' ? 'SUBSCRIPTION' : 'PAYG';
+      ['monthlyFee', 'includedTokens', 'inWeight', 'cachedWeight', 'outWeight',
+       'overagePer1M', 'inPer1M', 'cachedPer1M', 'outPer1M',
+       'livebenchScore', 'livebenchCostSuccess'].forEach(function (key) {
+        if (clean[key] !== null && clean[key] !== undefined && typeof clean[key] !== 'number') {
+          clean[key] = util.parseNumberToken(clean[key]);
+        }
+      });
+      if (!util.has(clean.id) || seen[clean.id]) {
+        counter += 1;
+        clean.id = 'gen-' + Date.now().toString(36) + '-' + counter;
+      }
+      seen[clean.id] = true;
+      return clean;
+    });
+    if (!Array.isArray(ds.models)) ds.models = [];
+    return ds;
+  }
+
+  function load(key, fallback) {
+    try {
+      var raw = window.localStorage.getItem(key);
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  /* Identifies the build (extraction timestamp) a stored overlay was
+     saved against; a rebuild produces a new key and invalidates it. */
+  function baselineKey() {
+    var meta = window.HC_BASELINE_DATA && window.HC_BASELINE_DATA.meta;
+    return meta ? meta.generated : 'unknown';
+  }
+
+  function save(key, value) {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      util.toast('Could not persist to localStorage: ' + e.message, 'err');
+      return false;
+    }
+  }
+
+  var dataset = null;
+
+  HC.state = {
+    init: function () {
+      var stored = normalizeDataset(load(KEY_DATASET, null));
+      var base = baseline();
+      var key = baselineKey();
+      /* Overlay data from an older build (or from before overlay tracking,
+         e.g. a stale pre-rebuild dataset) must never shadow fresh build
+         output - only data saved against the current build is kept. */
+      dataset = stored && stored.offers.length && stored._baseline === key ? stored : base;
+      if (!dataset.meta) dataset.meta = base.meta;
+    },
+
+    getDataset: function () { return dataset; },
+
+    getCalcState: function () { return load(KEY_CALC, null); },
+
+    setCalcState: function (state) { save(KEY_CALC, state); },
+
+    /* Model names in curated order (dataset.models first, then extras). */
+    orderedModels: function (offers) {
+      var source = offers || dataset.offers;
+      var present = {};
+      var ordered = [];
+      dataset.models.forEach(function (model) {
+        if (present[model.toLowerCase()]) return;
+        present[model.toLowerCase()] = model;
+      });
+      source.forEach(function (offer) {
+        if (!present[offer.model.toLowerCase()]) {
+          present[offer.model.toLowerCase()] = offer.model;
+        }
+      });
+      Object.keys(present).forEach(function (key) { ordered.push(present[key]); });
+      var curated = ordered.filter(function (model) {
+        return dataset.models.some(function (m) { return m.toLowerCase() === model.toLowerCase(); });
+      });
+      var extras = ordered.filter(function (model) {
+        return !dataset.models.some(function (m) { return m.toLowerCase() === model.toLowerCase(); });
+      }).sort(function (a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
+      return curated.concat(extras);
+    }
+  };
+})();
+
+</script>
+<script>
+/* Generic multi-select dropdown: a button that shows the current selection
+   plus a panel with a search box and a checkbox list. Used for the Model
+   filter so several models can be compared side by side.
+
+   Semantics mirror the single-select dropdowns, where the empty value means
+   "all": the selection is an explicit list of values, an empty list means
+   "all" (placeholder shown, no checkbox checked). Unchecking the last
+   selected value therefore returns to "all", and picking a single value
+   takes one click - like the "All" option of the previous dropdown. */
+(function () {
+  'use strict';
+
+  var HC = (window.HC = window.HC || {});
+  var util = HC.util;
+
+  function create(root, opts) {
+    opts = opts || {};
+    var placeholder = opts.placeholder || 'All';
+    var values = [];    /* current option list, in display order */
+    var selected = [];  /* explicit selection; empty = all */
+    var open = false;
+    var rows = {};      /* value -> { row, box } */
+
+    root.classList.add('msel');
+
+    var btn = util.el('button', { class: 'msel-btn', type: 'button', 'aria-haspopup': 'listbox' });
+    var btnText = util.el('span', { class: 'msel-text' });
+    btn.appendChild(btnText);
+    btn.appendChild(util.el('span', { class: 'msel-caret', 'aria-hidden': 'true' }));
+
+    var panel = util.el('div', { class: 'msel-panel' });
+    panel.hidden = true;
+
+    var search = util.el('input', {
+      class: 'msel-search', type: 'text', placeholder: 'Filter\u2026',
+      autocomplete: 'off', spellcheck: 'false'
+    });
+    var allBtn = util.el('button', { class: 'btn btn-sm msel-all', type: 'button' }, util.esc(opts.allLabel || 'All'));
+    var tools = util.el('div', { class: 'msel-tools' });
+    tools.appendChild(search);
+    tools.appendChild(allBtn);
+
+    var list = util.el('div', { class: 'msel-list' });
+    panel.appendChild(tools);
+    panel.appendChild(list);
+    root.appendChild(btn);
+    root.appendChild(panel);
+
+    function isChecked(value) {
+      return selected.indexOf(value) >= 0;
+    }
+
+    function summary() {
+      if (opts.summary) return opts.summary(selected, values.length);
+      if (!selected.length) return placeholder;
+      if (selected.length === 1) return selected[0];
+      return selected.length + ' selected';
+    }
+
+    function syncButton() {
+      btnText.textContent = summary();
+      btn.title = selected.length ? selected.join(', ') : placeholder;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      root.classList.toggle('open', open);
+    }
+
+    function syncChecks() {
+      values.forEach(function (value) {
+        if (rows[value]) rows[value].box.checked = isChecked(value);
+      });
+    }
+
+    function applyFilter() {
+      var query = search.value.trim().toLowerCase();
+      values.forEach(function (value) {
+        if (rows[value]) rows[value].row.hidden = !!query && value.toLowerCase().indexOf(query) < 0;
+      });
+    }
+
+    /* Rebuilt only when the option list itself changes (hoster / type
+       filters, dataset edits); plain selection toggles just sync the
+       checkbox states so an open panel keeps its focus and scroll. */
+    function buildList() {
+      var scroll = list.scrollTop;
+      list.innerHTML = '';
+      rows = {};
+      values.forEach(function (value) {
+        var row = util.el('label', { class: 'msel-item' });
+        var box = util.el('input', { type: 'checkbox' });
+        box.checked = isChecked(value);
+        box.addEventListener('change', function () { toggle(value, box.checked); });
+        row.appendChild(box);
+        row.appendChild(util.el('span', { class: 'msel-item-label' }, util.esc(value)));
+        rows[value] = { row: row, box: box };
+        list.appendChild(row);
+      });
+      applyFilter();
+      list.scrollTop = scroll;
+    }
+
+    function toggle(value, checked) {
+      var base = selected.slice();
+      var index = base.indexOf(value);
+      if (checked && index < 0) base.push(value);
+      else if (!checked && index >= 0) base.splice(index, 1);
+      selected = base;
+      syncChecks();
+      syncButton();
+      if (opts.onChange) opts.onChange(selected.slice());
+    }
+
+    function setOptions(newValues, newSelected) {
+      var changed = newValues.length !== values.length ||
+        newValues.some(function (value, index) { return values[index] !== value; });
+      values = newValues.slice();
+      selected = (newSelected || []).filter(function (value) { return values.indexOf(value) >= 0; });
+      if (changed) buildList();
+      else syncChecks();
+      syncButton();
+    }
+
+    function openPanel() {
+      open = true;
+      panel.hidden = false;
+      syncButton();
+      search.focus();
+    }
+
+    function closePanel() {
+      open = false;
+      panel.hidden = true;
+      /* reset the filter so a reopened panel shows the full list */
+      if (search.value) {
+        search.value = '';
+        applyFilter();
+      }
+      syncButton();
+    }
+
+    btn.addEventListener('click', function () { open ? closePanel() : openPanel(); });
+    allBtn.addEventListener('click', function () {
+      selected = [];
+      syncChecks();
+      syncButton();
+      if (opts.onChange) opts.onChange([]);
+    });
+    search.addEventListener('input', applyFilter);
+    search.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') { search.value = ''; applyFilter(); ev.stopPropagation(); }
+    });
+    document.addEventListener('mousedown', function (ev) {
+      if (open && !root.contains(ev.target)) closePanel();
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && open) closePanel();
+    });
+
+    syncButton();
+
+    return {
+      setOptions: setOptions,
+      getSelected: function () { return selected.slice(); },
+      close: closePanel,
+      isOpen: function () { return open; }
+    };
+  }
+
+  HC.multiselect = { create: create };
+})();
+
+</script>
+<script>
+/* Pricing engine - all cost calculations live here so they can be edited
+   or extended without touching the UI.
+
+   Offer fields (see Prices sheet of the source workbook):
+     type            'PAYG' | 'SUBSCRIPTION'
+     monthlyFee      subscription base fee per month
+     includedTokens  subscription quota in WEIGHTED tokens per month
+      inWeight        input share counted toward the quota   (default 1)
+      cachedWeight    cached share counted toward the quota  (blank = no cache
+                      support: cached tokens count at the in or out weight,
+                      selectable via setNoCacheMode - default in)
+      outWeight       output share counted toward the quota  (default 1)
+      overagePer1M    price per 1M weighted tokens beyond the quota
+                      (blank or 0 = hard cap: plan drops out over quota)
+      inPer1M         PAYG price per 1M input tokens
+      cachedPer1M     PAYG price per 1M cached tokens (blank = no cache
+                      support: cached tokens billed at the in or out price,
+                      selectable via setNoCacheMode - default in)
+      outPer1M        PAYG price per 1M output tokens
+
+   Cached-token support is derived from blank cached fields today; when
+   providers report per-model cache support explicitly, extend
+   supportsCached() and the effective-price helpers below - nothing else
+   in the app needs to change. */
+(function () {
+  'use strict';
+
+  var HC = (window.HC = window.HC || {});
+  var util = HC.util;
+
+  var MILLION = 1000000;
+  var SCALES = [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3];
+
+  /* How cached tokens are billed/counted for offers without cache support:
+     'input' (default) or 'output' rate/weight. */
+  var noCacheMode = 'input';
+  function setNoCacheMode(mode) { noCacheMode = mode === 'output' ? 'output' : 'input'; }
+
+  function supportsCached(offer) {
+    if (offer.type === 'SUBSCRIPTION') return util.has(offer.cachedWeight);
+    return util.has(offer.cachedPer1M);
+  }
+
+  function inWeight(offer) { return util.num(offer.inWeight, 1); }
+  function outWeight(offer) { return util.num(offer.outWeight, 1); }
+  function cachedWeight(offer) {
+    if (util.has(offer.cachedWeight)) return offer.cachedWeight;
+    return noCacheMode === 'output' ? outWeight(offer) : inWeight(offer);
+  }
+  function cachedPer1M(offer) {
+    if (util.has(offer.cachedPer1M)) return offer.cachedPer1M;
+    return util.num(noCacheMode === 'output' ? offer.outPer1M : offer.inPer1M, 0);
+  }
+
+  function isHardCap(offer) {
+    return offer.type === 'SUBSCRIPTION' && (!util.has(offer.overagePer1M) || offer.overagePer1M <= 0);
+  }
+
+  /* PAYG: input + cached + output, cached billed at input price when the
+     provider does not support cached tokens for this model. */
+  function paygCost(offer, usage) {
+    var input = usage.input / MILLION * util.num(offer.inPer1M, 0);
+    var cached = usage.cached / MILLION * cachedPer1M(offer);
+    var output = usage.output / MILLION * util.num(offer.outPer1M, 0);
+    return {
+      input: input,
+      cached: cached,
+      output: output,
+      fee: 0,
+      overage: 0,
+      total: input + cached + output
+    };
+  }
+
+  function weightedUsage(offer, usage) {
+    return usage.input * inWeight(offer)
+      + usage.cached * cachedWeight(offer)
+      + usage.output * outWeight(offer);
+  }
+
+  /* SUBSCRIPTION: flat fee plus overage; hard caps drop out over quota. */
+  function subscriptionCost(offer, usage) {
+    var quota = Math.max(0, util.num(offer.includedTokens, 0));
+    var fee = Math.max(0, util.num(offer.monthlyFee, 0));
+    var weighted = weightedUsage(offer, usage);
+    var quotaUsed = quota > 0 ? weighted / quota : null;
+    var base = {
+      input: 0,
+      cached: 0,
+      output: 0,
+      fee: fee,
+      weighted: weighted,
+      quota: quota,
+      quotaUsed: quotaUsed
+    };
+    if (isHardCap(offer)) {
+      if (weighted > quota) {
+        return Object.assign(base, { status: 'over_quota', overage: 0, total: null });
+      }
+      return Object.assign(base, { status: 'ok', overage: 0, total: fee });
+    }
+    var overTokens = Math.max(0, weighted - quota);
+    var overage = overTokens / MILLION * util.num(offer.overagePer1M, 0);
+    return Object.assign(base, { status: 'ok', overage: overage, total: fee + overage });
+  }
+
+  function cost(offer, usage) {
+    var result = offer.type === 'SUBSCRIPTION'
+      ? subscriptionCost(offer, usage)
+      : paygCost(offer, usage);
+    result.status = result.status || 'ok';
+    result.offer = offer;
+    result.cacheSupported = supportsCached(offer);
+    var totalTokens = usage.input + usage.cached + usage.output;
+    result.effPer1M = result.total != null && totalTokens > 0
+      ? result.total / (totalTokens / MILLION)
+      : null;
+    return result;
+  }
+
+  function matches(offer, selection) {
+    /* selection.models: list of model names to compare, empty/omitted = all
+       models (selection.model is still honored for single-model callers) */
+    var models = selection.models && selection.models.length
+      ? selection.models
+      : (selection.model ? [selection.model] : null);
+    if (models && models.indexOf(offer.model) < 0) return false;
+    if (selection.hoster && offer.hoster !== selection.hoster) return false;
+    if (selection.type && offer.type !== selection.type) return false;
+    return true;
+  }
+
+  /* Hosters with several subscription plans (e.g. tiered plans) are shown as
+     one offer: the cheapest plan that still covers the entered usage
+     (overage plans always qualify, hard caps only up to their quota). If no
+     plan covers the usage, the largest-quota plan is kept as the over-quota
+     row so the hoster stays visible. Grouped per hoster + model. */
+  function collapseSubscriptionPlans(rows) {
+    var kept = [];
+    var groups = {};
+    rows.forEach(function (row) {
+      if (row.offer.type !== 'SUBSCRIPTION') { kept.push(row); return; }
+      var key = row.offer.hoster + '\u0001' + row.offer.model;
+      (groups[key] = groups[key] || []).push(row);
+    });
+    Object.keys(groups).forEach(function (key) {
+      var group = groups[key];
+      var ok = group.filter(function (r) { return r.status === 'ok'; })
+        .sort(function (a, b) { return a.total - b.total; });
+      if (ok.length) { kept.push(ok[0]); return; }
+      var closest = group.slice()
+        .sort(function (a, b) { return (b.quota || 0) - (a.quota || 0); })[0];
+      kept.push(closest);
+    });
+    return kept;
+  }
+
+  function compare(offers, usage, selection) {
+    var rows = offers
+      .filter(function (offer) { return matches(offer, selection); })
+      .map(function (offer) { return cost(offer, usage); });
+    rows = collapseSubscriptionPlans(rows);
+
+    var ok = rows.filter(function (r) { return r.status === 'ok'; });
+    var best = null;
+    ok.forEach(function (row) {
+      if (!best || row.total < best.total) best = row;
+    });
+    var sorted = ok.slice().sort(function (a, b) { return a.total - b.total; });
+    var over = rows.filter(function (r) { return r.status !== 'ok'; })
+      .sort(function (a, b) { return (b.quotaUsed || 0) - (a.quotaUsed || 0); });
+
+    sorted.concat(over).forEach(function (row) {
+      row.isBest = best != null && row === best;
+      row.vsBest = best != null && row.status === 'ok' ? row.total - best.total : null;
+    });
+
+    var nextDiff = null;
+    if (sorted.length > 1) nextDiff = sorted[1].total - sorted[0].total;
+
+    var noCacheCount = sorted.filter(function (row) { return !row.cacheSupported; }).length;
+
+    return {
+      rows: sorted.concat(over),
+      matchCount: rows.length,
+      best: best,
+      nextDiff: nextDiff,
+      noCacheCount: noCacheCount
+    };
+  }
+
+  /* Cost of one offer if all entered volumes scale by factor s.
+     Hard-capped subscriptions return null once the quota is exceeded
+     (the line stops there, like in the workbook charts). */
+  function costAtScale(offer, usage, scale) {
+    if (offer.type === 'PAYG') {
+      var base = paygCost(offer, usage);
+      return base.total * scale;
+    }
+    var quota = Math.max(0, util.num(offer.includedTokens, 0));
+    var fee = Math.max(0, util.num(offer.monthlyFee, 0));
+    var weighted = weightedUsage(offer, usage) * scale;
+    if (isHardCap(offer)) {
+      return weighted <= quota ? fee : null;
+    }
+    var overTokens = Math.max(0, weighted - quota);
+    return fee + overTokens / MILLION * util.num(offer.overagePer1M, 0);
+  }
+
+  function curve(offer, usage, scales) {
+    return (scales || SCALES).map(function (scale) {
+      return { x: scale, y: costAtScale(offer, usage, scale) };
+    });
+  }
+
+  HC.pricing = {
+    SCALES: SCALES,
+    setNoCacheMode: setNoCacheMode,
+    getNoCacheMode: function () { return noCacheMode; },
+    supportsCached: supportsCached,
+    isHardCap: isHardCap,
+    inWeight: inWeight,
+    cachedWeight: cachedWeight,
+    outWeight: outWeight,
+    cachedPer1M: cachedPer1M,
+    weightedUsage: weightedUsage,
+    paygCost: paygCost,
+    subscriptionCost: subscriptionCost,
+    cost: cost,
+    costAtScale: costAtScale,
+    curve: curve,
+    matches: matches,
+    collapseSubscriptionPlans: collapseSubscriptionPlans,
+    compare: compare
+  };
+})();
+
+</script>
+<script>
+/* Chart layer.
+   Renderers are registered in a registry (HC.charts.register) so the
+   implementation can be replaced later (e.g. with a Chart.js or ECharts
+   renderer) without changing any calling code:
+       HC.charts.create(canvas, 'bar', {unit})  -> controller
+       controller.update(data)                  -> redraw (also on resize)
+   Current built-ins: 'bar', 'line' (dependency-free canvas 2D).
+
+   Bar data:  { items: [{label, value, highlight, muted}] }
+   Line data: { series: [{label, color, dashed, points: [{x, y|null}]}],
+                xLabels: [..], markerIndex: n }                              */
+(function () {
+  'use strict';
+
+  var HC = (window.HC = window.HC || {});
+  var util = HC.util;
+
+  var registry = {};
+
+  var COLORS = ['#2563eb', '#16a34a', '#d97706', '#7c3aed', '#0891b2', '#db2777',
+    '#65a30d', '#ea580c', '#0f766e', '#9333ea', '#475569', '#b45309'];
+
+  function nextColor(index) { return COLORS[index % COLORS.length]; }
+
+  /* Chart colors are read from the --hc-chart-* CSS variables (hosting
+     calculator block in styles.css) so the canvas charts follow the site's
+     light / dark theme; the literals below are fallbacks. */
+  function chartTheme() {
+    var cs = getComputedStyle(document.documentElement);
+    function pick(name, fallback) {
+      var value = cs.getPropertyValue(name);
+      value = value ? value.trim() : '';
+      return value || fallback;
+    }
+    return {
+      grid: pick('--hc-chart-grid', '#e8edf3'),
+      axis: pick('--hc-chart-axis', '#cbd5e1'),
+      tick: pick('--hc-chart-tick', '#64748b'),
+      label: pick('--hc-chart-label', '#475569'),
+      strong: pick('--hc-chart-strong', '#334155'),
+      empty: pick('--hc-chart-empty', '#94a3b8'),
+      bar: pick('--hc-chart-bar', '#2563eb'),
+      best: pick('--hc-chart-best', '#16a34a'),
+      muted: pick('--hc-chart-muted', '#cbd5e1'),
+      barValue: pick('--hc-chart-bar-value', '#1e3a8a'),
+      bestValue: pick('--hc-chart-best-value', '#14532d')
+    };
+  }
+
+  function setupCanvas(canvas) {
+    var dpr = window.devicePixelRatio || 1;
+    var cssWidth = Math.max(80, canvas.clientWidth || canvas.parentElement.clientWidth || 600);
+    var cssHeight = Math.max(80, canvas.clientHeight || parseInt(canvas.getAttribute('height'), 10) || 300);
+    canvas.width = Math.round(cssWidth * dpr);
+    canvas.height = Math.round(cssHeight * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+    return { ctx: ctx, w: cssWidth, h: cssHeight };
+  }
+
+  function niceStep(span, tickCount) {
+    if (span <= 0) return 1;
+    var raw = span / Math.max(1, tickCount);
+    var mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    var norm = raw / mag;
+    var step;
+    if (norm <= 1) step = 1;
+    else if (norm <= 2) step = 2;
+    else if (norm <= 2.5) step = 2.5;
+    else if (norm <= 5) step = 5;
+    else step = 10;
+    return step * mag;
+  }
+
+  /* Y-axis tick label for the cost charts: number + currency + unit,
+     e.g. "1.000€/mo" (no unit passed -> plain number). The currency comes
+     from util.getFormat() so it follows the settings. */
+  function fmtTick(value, opts) {
+    var text = Math.abs(value) >= 1000 ? util.fmtNum(value, 0) : util.fmtNum(value, 2);
+    if (opts && opts.unit) text += util.getFormat().currency + opts.unit;
+    return text;
+  }
+
+  /* Left padding for the y-axis: room for the widest tick label, so long
+     currency symbols or big values cannot clip at the left edge (the old
+     fixed 54px only just fit "1.000 /mo"). Call with ctx.font already set
+     to the tick font. */
+  function yPadLeft(ctx, ticks, step, opts) {
+    var widest = 0;
+    for (var i = 0; i <= ticks; i++) {
+      var w = ctx.measureText(fmtTick(i * step, opts)).width;
+      if (w > widest) widest = w;
+    }
+    return Math.max(54, Math.ceil(widest) + 10);
+  }
+
+  function drawEmpty(canvas, message) {
+    var s = setupCanvas(canvas);
+    s.ctx.fillStyle = chartTheme().empty;
+    s.ctx.font = '13px sans-serif';
+    s.ctx.textAlign = 'center';
+    s.ctx.textBaseline = 'middle';
+    s.ctx.fillText(message, s.w / 2, s.h / 2);
+    return [];
+  }
+
+  function wrapLabel(text, maxWidth, ctx) {
+    var words = String(text).split(/\s+/);
+    var lines = [];
+    var current = '';
+    words.forEach(function (word) {
+      var candidate = current ? current + ' ' + word : word;
+      if (ctx.measureText(candidate).width > maxWidth && current) {
+        lines.push(current);
+        current = word;
+      } else {
+        current = candidate;
+      }
+    });
+    if (current) lines.push(current);
+    return lines.slice(0, 3);
+  }
+
+  function drawBar(canvas, data, opts) {
+    var items = (data && data.items) || [];
+    if (!items.length) return drawEmpty(canvas, 'No matching offers to chart.');
+
+    var s = setupCanvas(canvas);
+    var ctx = s.ctx;
+    var theme = chartTheme();
+    var padRight = 10, padTop = 14;
+    var labelLinesMax = items.length > 10 ? 2 : 3;
+    var padBottom = 16 + labelLinesMax * 12;
+
+    var maxValue = 0;
+    items.forEach(function (item) { if (item.value > maxValue) maxValue = item.value; });
+    if (maxValue <= 0) maxValue = 1;
+    var step = niceStep(maxValue, 5);
+    var yMax = Math.ceil(maxValue / step) * step;
+
+    var ticks = Math.round(yMax / step);
+    ctx.font = '11px sans-serif';
+    var padLeft = yPadLeft(ctx, ticks, step, opts);
+
+    var plotW = s.w - padLeft - padRight;
+    var plotH = s.h - padTop - padBottom;
+
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var i = 0; i <= ticks; i++) {
+      var value = i * step;
+      var y = padTop + plotH - (value / yMax) * plotH;
+      ctx.strokeStyle = i === 0 ? theme.axis : theme.grid;
+      ctx.beginPath();
+      ctx.moveTo(padLeft, y);
+      ctx.lineTo(s.w - padRight, y);
+      ctx.stroke();
+      ctx.fillStyle = theme.tick;
+      ctx.fillText(fmtTick(value, opts), padLeft - 6, y);
+    }
+
+    var slot = plotW / items.length;
+    var barW = Math.max(6, Math.min(64, slot * 0.62));
+    var hits = [];
+
+    ctx.textAlign = 'center';
+    items.forEach(function (item, index) {
+      var cx = padLeft + slot * index + slot / 2;
+      var barH = (item.value / yMax) * plotH;
+      var y = padTop + plotH - barH;
+      ctx.fillStyle = item.muted ? theme.muted : (item.highlight ? theme.best : theme.bar);
+      if (item.muted) ctx.globalAlpha = 0.6;
+      ctx.beginPath();
+      var r = Math.min(4, barW / 2);
+      ctx.moveTo(cx - barW / 2, padTop + plotH);
+      ctx.lineTo(cx - barW / 2, y + r);
+      ctx.quadraticCurveTo(cx - barW / 2, y, cx - barW / 2 + r, y);
+      ctx.lineTo(cx + barW / 2 - r, y);
+      ctx.quadraticCurveTo(cx + barW / 2, y, cx + barW / 2, y + r);
+      ctx.lineTo(cx + barW / 2, padTop + plotH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = theme.strong;
+      ctx.font = '10.5px sans-serif';
+      ctx.textBaseline = 'bottom';
+      var valueText = util.fmtMoney(item.value);
+      if (barH > 18) {
+        ctx.fillStyle = item.muted ? theme.empty : (item.highlight ? theme.bestValue : theme.barValue);
+        ctx.fillText(valueText, cx, y - 2);
+      } else {
+        ctx.fillText(valueText, cx, y - 2);
+      }
+
+      var lines = wrapLabel(item.label, Math.max(28, slot - 6), ctx).slice(0, labelLinesMax);
+      ctx.fillStyle = theme.label;
+      ctx.textBaseline = 'top';
+      lines.forEach(function (line, li) {
+        ctx.fillText(line, cx, padTop + plotH + 8 + li * 12);
+      });
+
+      hits.push({
+        x: cx - slot / 2, y: padTop, w: slot, h: plotH,
+        title: item.label,
+        lines: [item.muted ? 'excluded (over quota)' : util.fmtMoney(item.value)]
+      });
+    });
+
+    return hits;
+  }
+
+  function drawLine(canvas, data, opts) {
+    var series = (data && data.series) || [];
+    if (!series.length || !series.some(function (ser) { return ser.points.some(function (p) { return p.y != null; }); })) {
+      return drawEmpty(canvas, 'No matching offers to chart.');
+    }
+
+    var s = setupCanvas(canvas);
+    var ctx = s.ctx;
+    var theme = chartTheme();
+    var padRight = 12, padTop = 34, padBottom = 28;
+
+    var xLabels = data.xLabels || [];
+    var n = xLabels.length || series[0].points.length;
+    var maxValue = 0;
+    series.forEach(function (ser) {
+      ser.points.forEach(function (p) { if (p.y != null && p.y > maxValue) maxValue = p.y; });
+    });
+    if (maxValue <= 0) maxValue = 1;
+    var step = niceStep(maxValue, 5);
+    var yMax = Math.ceil(maxValue / step) * step;
+
+    var ticks = Math.round(yMax / step);
+    ctx.font = '11px sans-serif';
+    var padLeft = yPadLeft(ctx, ticks, step, opts);
+
+    var plotW = s.w - padLeft - padRight;
+    var plotH = s.h - padTop - padBottom;
+
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'right';
+    for (var i = 0; i <= ticks; i++) {
+      var value = i * step;
+      var y = padTop + plotH - (value / yMax) * plotH;
+      ctx.strokeStyle = i === 0 ? theme.axis : theme.grid;
+      ctx.beginPath();
+      ctx.moveTo(padLeft, y);
+      ctx.lineTo(s.w - padRight, y);
+      ctx.stroke();
+      ctx.fillStyle = theme.tick;
+      ctx.fillText(fmtTick(value, opts), padLeft - 6, y);
+    }
+
+    function xAt(index) { return padLeft + (n <= 1 ? 0 : (plotW * index) / (n - 1)); }
+    function yAt(value) { return padTop + plotH - (value / yMax) * plotH; }
+
+    if (data.markerIndex != null && data.markerIndex >= 0 && data.markerIndex < n) {
+      var mx = xAt(data.markerIndex);
+      ctx.strokeStyle = theme.empty;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(mx, padTop);
+      ctx.lineTo(mx, padTop + plotH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = theme.tick;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText('your usage', mx, padTop + plotH + 12);
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = theme.label;
+    xLabels.forEach(function (label, index) {
+      ctx.fillText(label, xAt(index), padTop + plotH + 6);
+    });
+
+    var hits = [];
+    series.forEach(function (ser) {
+      var color = ser.color || nextColor(series.indexOf(ser));
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      if (ser.dashed) ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      var started = false;
+      ser.points.forEach(function (p, index) {
+        if (p.y == null) { started = false; return; }
+        var x = xAt(index), y = yAt(p.y);
+        if (!started) { ctx.moveTo(x, y); started = true; }
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = color;
+      ser.points.forEach(function (p, index) {
+        if (p.y == null) return;
+        ctx.beginPath();
+        ctx.arc(xAt(index), yAt(p.y), 2.6, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    });
+
+    var legendY = 8;
+    var legendFont = '11px sans-serif';
+    ctx.font = legendFont;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    var lx = padLeft;
+    series.forEach(function (ser) {
+      var color = ser.color || nextColor(series.indexOf(ser));
+      var label = String(ser.label || '');
+      if (label.length > 26) label = label.slice(0, 25) + '\u2026';
+      var textW = ctx.measureText(label).width;
+      if (lx + textW + 26 > s.w - padRight && lx > padLeft) {
+        lx = padLeft;
+        legendY += 16;
+        if (legendY > padTop - 6) return;
+      }
+      ctx.fillStyle = color;
+      ctx.fillRect(lx, legendY - 4, 14, 3);
+      ctx.fillStyle = theme.strong;
+      ctx.fillText(label, lx + 18, legendY - 2.5);
+      lx += textW + 34;
+    });
+
+    xLabels.forEach(function (label, index) {
+      hits.push({
+        x: xAt(index) - (plotW / n) / 2, y: padTop, w: plotW / n, h: plotH,
+        title: label + ' tokens / month',
+        lines: series.map(function (ser) {
+          var p = ser.points[index];
+          return { color: ser.color, label: ser.label, value: p && p.y != null ? util.fmtMoney(p.y) : 'excluded' };
+        })
+      });
+    });
+
+    return hits;
+  }
+
+  function ensureTip(canvas) {
+    var parent = canvas.parentElement;
+    var tip = parent.querySelector('.chart-tip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.className = 'chart-tip';
+      tip.hidden = true;
+      parent.appendChild(tip);
+    }
+    return tip;
+  }
+
+  function renderTip(tip, hit, canvas) {
+    if (!hit) { tip.hidden = true; return; }
+    var html = '<div class="tip-title">' + util.esc(hit.title) + '</div>';
+    (hit.lines || []).forEach(function (line) {
+      if (typeof line === 'string') {
+        html += '<div class="tip-row"><span>' + util.esc(line) + '</span></div>';
+      } else {
+        html += '<div class="tip-row"><span>' +
+          (line.color ? '<span class="tip-swatch" style="background:' + line.color + '"></span>' : '') +
+          util.esc(line.label) + '</span><span>' + util.esc(line.value) + '</span></div>';
+      }
+    });
+    tip.innerHTML = html;
+    tip.hidden = false;
+    var rect = canvas.getBoundingClientRect();
+    var parentRect = canvas.parentElement.getBoundingClientRect();
+    var left = hit.x + 12;
+    var top = Math.max(4, hit.y + 8);
+    if (left + tip.offsetWidth > parentRect.width - 4) left = hit.x - tip.offsetWidth - 12;
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+  }
+
+  function create(canvas, type, opts) {
+    var controller = {
+      type: type,
+      data: null,
+      hits: [],
+      update: function (data) {
+        controller.data = data;
+        controller.redraw();
+      },
+      redraw: function () {
+        var draw = registry[type];
+        if (!draw) throw new Error('unknown chart type: ' + type);
+        controller.hits = draw(canvas, controller.data, opts) || [];
+      }
+    };
+
+    var tip = ensureTip(canvas);
+    var raf = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(function () {
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(function () {
+          if (controller.data) controller.redraw();
+        });
+      }).observe(canvas.parentElement);
+    }
+
+    canvas.addEventListener('mousemove', function (ev) {
+      var rect = canvas.getBoundingClientRect();
+      var x = ev.clientX - rect.left;
+      var y = ev.clientY - rect.top;
+      var found = null;
+      controller.hits.forEach(function (hit) {
+        if (x >= hit.x && x <= hit.x + hit.w && y >= hit.y && y <= hit.y + hit.h) found = hit;
+      });
+      renderTip(tip, found, canvas);
+    });
+    canvas.addEventListener('mouseleave', function () { renderTip(tip, null, canvas); });
+
+    return controller;
+  }
+
+  HC.charts = {
+    register: function (type, draw) { registry[type] = draw; },
+    create: create,
+    nextColor: nextColor,
+    fmtTick: fmtTick,
+    registry: function () { return Object.assign({}, registry); }
+  };
+
+  HC.charts.register('bar', drawBar);
+  HC.charts.register('line', drawLine);
+})();
+
+</script>
+<script>
+/* Calculator view.
+   The Model / Hoster / Type dropdowns are mutually dependent: every dropdown
+   only offers combinations that actually exist in the dataset, selections
+   that become invalid are auto-corrected, and a match counter is shown.
+   (This fixes the workbook's broken spill-range data validation, which went
+   stale and fell back to the full list on empty filter results.)
+   The Model dropdown is a multi-select (HC.multiselect) so several models
+   can be compared side by side; its selection is a list of model names in
+   state.models, an empty list meaning "all models". */
+(function () {
+  'use strict';
+
+  var HC = (window.HC = window.HC || {});
+  var util = HC.util;
+
+  var els = {};
+  var charts = {};
+  var modelSelect = null;
+
+  var state = {
+    models: [],
+    hoster: '',
+    type: '',
+    usage: { input: 72000000, cached: 72000000, output: 9000000 },
+    noCacheMode: 'input',
+    sort: null
+  };
+
+  /* X range of the usage-scale chart, as multiples of the entered usage. */
+  var viewScale = { min: 0.1, max: 3 };
+
+  /* ---- table sorting ----
+     Clicking a column header cycles primary dir -> opposite dir -> off
+     (the default cheapest-first order). The value getter mirrors what the
+     cell displays, so cells shown as "\u2014" sort as missing (always last);
+     the LiveBench columns default to best-first (score high, cost low). */
+  var SORT_COLUMNS = {
+    hoster: { text: true, dir: 'asc', value: function (row) { return row.offer.hoster; } },
+    model: { text: true, dir: 'asc', value: function (row) { return row.offer.model; } },
+    type: { text: true, dir: 'asc', value: function (row) { return row.offer.type; } },
+    livebenchScore: { dir: 'desc', value: function (row) { return row.offer.livebenchScore; } },
+    livebenchCostSuccess: { dir: 'asc', value: function (row) { return row.offer.livebenchCostSuccess; } },
+    input: { dir: 'asc', value: function (row) { return row.status === 'ok' ? row.input : null; } },
+    cached: { dir: 'asc', value: function (row) { return row.status === 'ok' ? row.cached : null; } },
+    output: { dir: 'asc', value: function (row) { return row.status === 'ok' ? row.output : null; } },
+    fee: { dir: 'asc', value: function (row) { return row.offer.type === 'SUBSCRIPTION' ? row.fee : null; } },
+    overage: { dir: 'asc', value: function (row) { return row.offer.type === 'SUBSCRIPTION' && row.status === 'ok' ? row.overage : null; } },
+    quotaUsed: { dir: 'asc', value: function (row) { return row.offer.type === 'SUBSCRIPTION' ? row.quotaUsed : null; } },
+    total: { dir: 'asc', value: function (row) { return row.status === 'ok' ? row.total : null; } },
+    vsBest: { dir: 'asc', value: function (row) { return row.isBest ? 0 : row.vsBest; } },
+    effPer1M: { dir: 'asc', value: function (row) { return row.status === 'ok' ? row.effPer1M : null; } }
+  };
+
+  function sortedRows(rows) {
+    if (!state.sort) return rows;
+    var column = SORT_COLUMNS[state.sort.key];
+    if (!column) return rows;
+    var dir = state.sort.dir === 'desc' ? -1 : 1;
+    function missing(value) {
+      return !util.has(value) || (typeof value === 'number' && !Number.isFinite(value));
+    }
+    return rows.map(function (row) { return { row: row, value: column.value(row) }; })
+      .sort(function (a, b) {
+        if (missing(a.value) && missing(b.value)) return 0;
+        if (missing(a.value)) return 1;
+        if (missing(b.value)) return -1;
+        if (column.text) return a.value.localeCompare(b.value) * dir;
+        return (a.value - b.value) * dir;
+      })
+      .map(function (pair) { return pair.row; });
+  }
+
+  function updateSortHeaders() {
+    Array.prototype.forEach.call(els.table.querySelectorAll('th[data-sort]'), function (th) {
+      var active = state.sort && state.sort.key === th.getAttribute('data-sort');
+      th.classList.toggle('sort-asc', !!active && state.sort.dir === 'asc');
+      th.classList.toggle('sort-desc', !!active && state.sort.dir === 'desc');
+    });
+  }
+
+  function bindSortHeaders() {
+    Array.prototype.forEach.call(els.table.querySelectorAll('th[data-sort]'), function (th) {
+      th.addEventListener('click', function () {
+        var key = th.getAttribute('data-sort');
+        var column = SORT_COLUMNS[key];
+        if (!column) return;
+        if (!state.sort || state.sort.key !== key) state.sort = { key: key, dir: column.dir };
+        else if (state.sort.dir === column.dir) state.sort = { key: key, dir: column.dir === 'asc' ? 'desc' : 'asc' };
+        else state.sort = null;
+        refresh();
+      });
+    });
+  }
+
+  function defaultSelection(offers, orderedModels) {
+    var preferred = 'DeepSeek V4.1 Flash';
+    var models = orderedModels.filter(function (m) { return m === preferred; });
+    if (!models.length && orderedModels.length) models = [orderedModels[0]];
+    return { models: models, hoster: '', type: '' };
+  }
+
+  /* ---- cascading dropdown option sets ---- */
+
+  function optionSets(offers, selection) {
+    var sets = {};
+    sets.models = modelsFor(offers, selection);
+    sets.hosters = hostersFor(offers, selection);
+    sets.types = typesFor(offers, selection);
+    return sets;
+  }
+
+  /* True when the model is part of the comparison; an empty selection
+     means "all models". */
+  function modelWanted(selection, model) {
+    if (!selection.models || !selection.models.length) return true;
+    return selection.models.indexOf(model) >= 0;
+  }
+
+  function modelsFor(offers, selection) {
+    var wanted = {};
+    offers.forEach(function (offer) {
+      if (selection.hoster && offer.hoster !== selection.hoster) return;
+      if (selection.type && offer.type !== selection.type) return;
+      wanted[offer.model.toLowerCase()] = offer.model;
+    });
+    return HC.state.orderedModels(offers).filter(function (model) {
+      return wanted[model.toLowerCase()] != null;
+    });
+  }
+
+  function hostersFor(offers, selection) {
+    var list = [];
+    var seen = {};
+    offers.forEach(function (offer) {
+      if (!modelWanted(selection, offer.model)) return;
+      if (selection.type && offer.type !== selection.type) return;
+      if (!seen[offer.hoster]) { seen[offer.hoster] = true; list.push(offer.hoster); }
+    });
+    return list.sort(function (a, b) { return a.localeCompare(b); });
+  }
+
+  function typesFor(offers, selection) {
+    var list = [];
+    var seen = {};
+    offers.forEach(function (offer) {
+      if (!modelWanted(selection, offer.model)) return;
+      if (selection.hoster && offer.hoster !== selection.hoster) return;
+      if (!seen[offer.type]) { seen[offer.type] = true; list.push(offer.type); }
+    });
+    return ['PAYG', 'SUBSCRIPTION'].filter(function (type) { return list.indexOf(type) >= 0; });
+  }
+
+  /* Fix up the selection so every dropdown keeps a valid value; an empty
+     value means "all" (models, hosters and types alike). Each option set
+     is recomputed right before its check so corrections cascade within
+     one pass (models -> hoster -> type). Selected models that no longer
+     exist under the hoster / type filters are dropped - if all of them
+     are dropped the selection falls back to "all models", exactly like
+     the single-select dropdown treated a stale model name. */
+  function normalizeSelection(offers, selection) {
+    var current = {
+      models: (selection.models || []).slice(),
+      hoster: selection.hoster,
+      type: selection.type
+    };
+    if (!offers.length) return { models: [], hoster: '', type: '' };
+    for (var pass = 0; pass < 4; pass++) {
+      var changed = false;
+      var models = modelsFor(offers, current);
+      if (current.models.length) {
+        var kept = current.models.filter(function (m) { return models.indexOf(m) >= 0; });
+        if (kept.length !== current.models.length) {
+          current.models = kept;
+          changed = true;
+        }
+      }
+      var hosters = hostersFor(offers, current);
+      if ([''].concat(hosters).indexOf(current.hoster) < 0) {
+        current.hoster = '';
+        changed = true;
+      }
+      var types = typesFor(offers, current);
+      if ([''].concat(types).indexOf(current.type) < 0) {
+        current.type = '';
+        changed = true;
+      }
+      if (!changed) break;
+    }
+    return current;
+  }
+
+  function fillSelect(select, values, current, allLabel) {
+    var html = '';
+    if (allLabel != null) {
+      html += '<option value="">' + util.esc(allLabel) + '</option>';
+    }
+    values.forEach(function (value) {
+      var selected = value === current ? ' selected' : '';
+      html += '<option value="' + util.esc(value) + '"' + selected + '>' + util.esc(value) + '</option>';
+    });
+    select.innerHTML = html;
+    select.value = current == null ? '' : String(current);
+  }
+
+  /* Hoster label for cards / charts; plan and model are appended when they
+     add context (a multi-plan hoster / a multi-model view) so rows of
+     different plans and models stay distinguishable. */
+  function offerLabel(offer) {
+    var label = offer.hoster;
+    if (offer.plan) label += ' \u00b7 ' + offer.plan;
+    if (state.models.length !== 1) label += ' \u00b7 ' + offer.model;
+    return label;
+  }
+
+  /* ---- rendering ---- */
+
+  function renderMatchInfo(result) {
+    var text = '<span class="count">' + result.matchCount + '</span> offer' +
+      (result.matchCount === 1 ? ' matches' : 's match') + ' your selection';
+    if (state.usage.cached > 0 && result.noCacheCount > 0) {
+      text += ' &middot; <span>' + result.noCacheCount + ' without cached-token support' +
+        ' (cached billed at ' + state.noCacheMode + ' rate)</span>';
+    }
+    els.matchInfo.innerHTML = text;
+  }
+
+  function renderSummary(result) {
+    var cards = '';
+    if (result.best) {
+      cards += '<div class="card card-best"><div class="card-label">Cheapest offer</div>' +
+        '<div class="card-value">' + util.fmtMoney(result.best.total) + '</div>' +
+        '<div class="card-sub">' + util.esc(offerLabel(result.best.offer)) +
+        ' &middot; ' + util.esc(result.best.offer.type) + '</div></div>';
+    } else {
+      cards += '<div class="card"><div class="card-label">Cheapest offer</div>' +
+        '<div class="card-value">&mdash;</div><div class="card-sub">no usable offer</div></div>';
+    }
+    var usageSum = state.usage.input + state.usage.cached + state.usage.output;
+    cards += '<div class="card"><div class="card-label">Total tokens / month</div>' +
+      '<div class="card-value">' + util.esc(util.fmtTokens(usageSum)) + '</div>' +
+      '<div class="card-sub">' + util.esc(util.fmtNum(state.usage.input, 0)) + ' in / ' +
+      util.esc(util.fmtNum(state.usage.cached, 0)) + ' cached / ' +
+      util.esc(util.fmtNum(state.usage.output, 0)) + ' out</div></div>';
+    cards += '<div class="card"><div class="card-label">Next cheapest</div>' +
+      '<div class="card-value">' + (result.nextDiff != null ? '+ ' + util.fmtMoney(result.nextDiff) : '&mdash;') + '</div>' +
+      '<div class="card-sub">' + (result.nextDiff != null && result.best
+        ? util.esc(result.best.offer.hoster) + ' saves this much'
+        : 'not enough offers to compare') + '</div></div>';
+    if (result.best) {
+      cards += '<div class="card"><div class="card-label">Effective cost / 1M tokens</div>' +
+        '<div class="card-value">' + util.fmtMoney(result.best.effPer1M, 3) + '</div>' +
+        '<div class="card-sub">cheapest offer, blended rate</div></div>';
+    }
+    els.summary.innerHTML = cards;
+  }
+
+  function renderTable(result) {
+    var rows = sortedRows(result.rows);
+    if (!rows.length) {
+      els.tbody.innerHTML = '<tr><td colspan="14" class="muted">No offers match - adjust the filters above.</td></tr>';
+      return;
+    }
+    var html = '';
+    rows.forEach(function (row) {
+      var offer = row.offer;
+      var over = row.status !== 'ok';
+      var cls = over ? 'row-muted' : (row.isBest ? 'row-best' : '');
+      var cachedCell = over ? '\u2014' : util.fmtMoney(row.cached);
+      var cachedBadge = '';
+      if (!over && !row.cacheSupported && state.usage.cached > 0) {
+        cachedBadge = '<span class="badge badge-warn" title="Provider does not support cached tokens for this model - cached tokens are billed/counted like ' + state.noCacheMode + ' tokens.">no cache</span>';
+      }
+      html += '<tr class="' + cls + '">' +
+        '<td class="col-hoster">' + util.esc(offer.hoster) +
+        (offer.plan ? ' <span class="badge badge-plan" title="subscription plan">' + util.esc(offer.plan) + '</span>' : '') +
+        '</td>' +
+        '<td class="col-model">' + util.esc(offer.model) + '</td>' +
+        '<td class="col-type"><span class="badge badge-type">' + util.esc(offer.type) + '</span></td>' +
+        '<td class="num" title="Overall score from LiveBench 2.0 (higher is better). Only available for models that were evaluated.">' + util.fmtNum(offer.livebenchScore, 1) + '</td>' +
+        '<td class="num" title="Cost per successful task, based on LiveBench\'s evaluation and their reference pricing (USD, converted to EUR). The actual cost per successful task may differ for the providers listed here, and the price may change due to currency conversion.">' + util.fmtMoney(offer.livebenchCostSuccess, 2) + '</td>' +
+        '<td class="num cell-total">' + (over ? '<span class="cell-over">over quota</span>' : util.fmtMoney(row.total)) + '</td>' +
+        '<td class="num">' + (row.isBest ? '\u25c0 cheapest' : (row.vsBest != null ? '+' + util.fmtMoney(row.vsBest) : '')) + '</td>' +
+        '<td class="num">' + (over ? '\u2014' : util.fmtMoney(row.effPer1M, 3)) + '</td>' +
+        '<td class="num">' + (over ? '\u2014' : util.fmtMoney(row.input)) + '</td>' +
+        '<td class="num">' + cachedCell + cachedBadge + '</td>' +
+        '<td class="num">' + (over ? '\u2014' : util.fmtMoney(row.output)) + '</td>' +
+        '<td class="num">' + (offer.type === 'SUBSCRIPTION' ? util.fmtMoney(row.fee) : '\u2014') + '</td>' +
+        '<td class="num">' + (offer.type === 'SUBSCRIPTION' && !over ? util.fmtMoney(row.overage) : '\u2014') + '</td>' +
+        '<td class="num">' + (offer.type === 'SUBSCRIPTION' ? util.fmtPct(row.quotaUsed) : '\u2014') + '</td>' +
+        '</tr>';
+    });
+    els.tbody.innerHTML = html;
+  }
+
+  function renderCharts(result) {
+    var okRows = result.rows.filter(function (row) { return row.status === 'ok'; });
+
+    charts.bar.update({
+      items: okRows.map(function (row) {
+        return {
+          label: offerLabel(row.offer) + ' (' + row.offer.type + ')',
+          value: row.total,
+          highlight: row.isBest
+        };
+      })
+    });
+
+    var scaleRows = okRows.slice(0, 12);
+    var steps = scaleSteps(viewScale.min, viewScale.max);
+    var totalTokens = state.usage.input + state.usage.cached + state.usage.output;
+    charts.line.update({
+      xLabels: steps.scales.map(function (s) { return util.fmtTokens(s * totalTokens); }),
+      markerIndex: steps.markerIndex,
+      series: scaleRows.map(function (row, index) {
+        return {
+          label: offerLabel(row.offer) + (row.offer.type === 'SUBSCRIPTION' ? ' (sub)' : ''),
+          color: HC.charts.nextColor(index),
+          dashed: row.offer.type === 'SUBSCRIPTION' && HC.pricing.isHardCap(row.offer),
+          points: HC.pricing.curve(row.offer, state.usage, steps.scales)
+        };
+      })
+    });
+  }
+
+  /* Sample points for the usage-scale chart: geometric steps from min up to
+     1 (the user's entered usage, always an exact point so the marker sits on
+     real data) and on to max. Scrolling on the chart grows / shrinks max. */
+  function scaleSteps(min, max) {
+    var scales = [min];
+    var lowCount = 3;
+    var highCount = 3;
+    for (var k = 1; k <= lowCount; k++) {
+      scales.push(min * Math.pow(1 / min, k / (lowCount + 1)));
+    }
+    scales.push(1);
+    for (var j = 1; j <= highCount; j++) {
+      scales.push(Math.pow(max, j / highCount));
+    }
+    return { scales: scales, markerIndex: lowCount + 1 };
+  }
+
+  function renderTokenInputs() {
+    ['input', 'cached', 'output'].forEach(function (key) {
+      var input = els['in-' + key];
+      if (document.activeElement !== input) {
+        input.value = util.fmtNum(state.usage[key], 0);
+      }
+    });
+  }
+
+  function refresh() {
+    var dataset = HC.state.getDataset();
+    var offers = dataset.offers;
+
+    HC.pricing.setNoCacheMode(state.noCacheMode);
+    els.legend.innerHTML = '<span class="badge badge-warn">no cache</span> cached tokens billed at ' +
+      state.noCacheMode + ' rate';
+
+    var selection = normalizeSelection(offers, state);
+    state.models = selection.models;
+    state.hoster = selection.hoster;
+    state.type = selection.type;
+
+    var sets = optionSets(offers, state);
+    modelSelect.setOptions(sets.models, state.models);
+    fillSelect(els.hoster, sets.hosters, state.hoster, 'All hosters');
+    fillSelect(els.type, sets.types, state.type, 'All types');
+
+    var modelCount = state.models.length;
+    var allModels = modelCount !== 1;
+    els.table.classList.toggle('all-models', allModels);
+    els.title.textContent = modelCount === 0 ? 'Offers for all models'
+      : (modelCount === 1 ? 'Offers for selected model'
+        : 'Offers for ' + modelCount + ' models');
+
+    renderTokenInputs();
+
+    var result = HC.pricing.compare(offers, state.usage, state);
+    renderMatchInfo(result);
+    renderSummary(result);
+    renderTable(result);
+    renderCharts(result);
+    updateSortHeaders();
+
+    HC.state.setCalcState({ models: state.models, hoster: state.hoster, type: state.type,
+      usage: state.usage, noCacheMode: state.noCacheMode, sort: state.sort });
+  }
+
+  function applyStoredState() {
+    var stored = HC.state.getCalcState();
+    var offers = HC.state.getDataset().offers;
+    var models = HC.state.orderedModels(offers);
+    if (stored && stored.usage) {
+      ['input', 'cached', 'output'].forEach(function (key) {
+        var parsed = util.parseTokens(stored.usage[key]);
+        if (parsed != null) state.usage[key] = parsed;
+      });
+      state.hoster = stored.hoster || '';
+      state.type = stored.type || '';
+      state.noCacheMode = stored.noCacheMode === 'output' ? 'output' : 'input';
+      state.sort = stored.sort && SORT_COLUMNS[stored.sort.key]
+        ? { key: stored.sort.key, dir: stored.sort.dir === 'desc' ? 'desc' : 'asc' }
+        : null;
+      /* stored.models is the multi-model selection ([] = all models); older
+         saves have a single model string. Unknown names are dropped rather
+         than silently replaced; an empty result means "All models". */
+      var wanted = [];
+      var seen = {};
+      var raw = Array.isArray(stored.models)
+        ? stored.models
+        : (stored.model != null ? [stored.model] : []);
+      raw.forEach(function (model) {
+        if (model == null || seen[model] || models.indexOf(model) < 0) return;
+        seen[model] = true;
+        wanted.push(model);
+      });
+      state.models = wanted;
+    } else {
+      state.models = defaultSelection(offers, models).models;
+    }
+  }
+
+  function bindTokenInput(key) {
+    var input = els['in-' + key];
+    input.addEventListener('change', function () {
+      var parsed = util.parseTokens(input.value);
+      if (parsed == null) {
+        util.toast('Could not read "' + input.value + '" as a token count.', 'err');
+        input.value = util.fmtNum(state.usage[key], 0);
+        return;
+      }
+      state.usage[key] = Math.max(0, parsed);
+      input.value = util.fmtNum(state.usage[key], 0);
+      refresh();
+    });
+    input.addEventListener('blur', function () {
+      input.value = util.fmtNum(state.usage[key], 0);
+    });
+  }
+
+  function init() {
+    els.model = document.getElementById('msel-model');
+    els.hoster = document.getElementById('sel-hoster');
+    els.type = document.getElementById('sel-type');
+    els.table = document.getElementById('offers-table');
+    els.title = document.getElementById('offers-title');
+    els.matchInfo = document.getElementById('match-info');
+    els.summary = document.getElementById('summary-cards');
+    els.tbody = document.getElementById('offers-tbody');
+    els['in-input'] = document.getElementById('in-input');
+    els['in-cached'] = document.getElementById('in-cached');
+    els['in-output'] = document.getElementById('in-output');
+    els.nocache = document.getElementById('sel-nocache');
+    els.legend = document.getElementById('legend-nocache');
+
+    charts.bar = HC.charts.create(document.getElementById('chart-bar'), 'bar', { unit: '/mo' });
+    charts.line = HC.charts.create(document.getElementById('chart-line'), 'line', { unit: '/mo' });
+
+    var lineCanvas = document.getElementById('chart-line');
+    lineCanvas.style.cursor = 'ew-resize';
+    lineCanvas.addEventListener('wheel', function (ev) {
+      ev.preventDefault();
+      /* horizontal trackpad scroll drives the range; a plain mouse wheel
+         (vertical) works the same way */
+      var delta = Math.abs(ev.deltaX) > Math.abs(ev.deltaY) ? ev.deltaX : ev.deltaY;
+      if (!delta) return;
+      if (ev.deltaMode === 1) delta *= 33;
+      else if (ev.deltaMode === 2) delta *= 300;
+      var ticks = Math.max(-3, Math.min(3, delta / 100));
+      viewScale.max = Math.min(2000, Math.max(1.2, viewScale.max * Math.pow(1.3, ticks)));
+      refresh();
+    }, { passive: false });
+
+    applyStoredState();
+
+    modelSelect = HC.multiselect.create(els.model, {
+      placeholder: 'All models',
+      allLabel: 'All models',
+      summary: function (selected, total) {
+        if (!selected.length || selected.length === total) return 'All models';
+        if (selected.length === 1) return selected[0];
+        return selected.length + ' of ' + total + ' models';
+      },
+      onChange: function (selected) { state.models = selected; refresh(); }
+    });
+
+    els.hoster.addEventListener('change', function () { state.hoster = els.hoster.value; refresh(); });
+    els.type.addEventListener('change', function () { state.type = els.type.value; refresh(); });
+    els.nocache.value = state.noCacheMode;
+    els.nocache.addEventListener('change', function () {
+      state.noCacheMode = els.nocache.value === 'output' ? 'output' : 'input';
+      refresh();
+    });
+
+    bindTokenInput('input');
+    bindTokenInput('cached');
+    bindTokenInput('output');
+
+    bindSortHeaders();
+
+    refresh();
+  }
+
+  HC.ui = {
+    init: init,
+    refresh: refresh,
+    getState: function () { return state; }
+  };
+})();
+
+</script>
+<script>
+/* App bootstrap: dataset state first, then the calculator UI. */
+(function () {
+  'use strict';
+
+  var HC = (window.HC = window.HC || {});
+
+  function init() {
+    HC.state.init();
+    HC.ui.init();
+    HC.ready = true; /* the theme toggle may now re-render the charts */
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+</script>
+<script>
+/* Fill the dataset footnote from the embedded baseline data. */
+(function () {
+  'use strict';
+  var node = document.getElementById('hc-meta');
+  var meta = window.HC_BASELINE_DATA && window.HC_BASELINE_DATA.meta;
+  if (!node || !meta) return;
+  var generated = meta.generated ? String(meta.generated).slice(0, 10) : 'unknown';
+  node.textContent = 'Dataset: ' + meta.offerCount + ' offers across ' + meta.modelCount +
+    ' models' + (meta.currency ? ' (' + meta.currency + ')' : '') +
+    ', generated ' + generated + '.';
+})();
+</script>
+</body>
+</html>
